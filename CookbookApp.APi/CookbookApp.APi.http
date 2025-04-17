@@ -1,0 +1,6 @@
+@CookbookApp.APi_HostAddress = http://localhost:5007
+
+GET {{CookbookApp.APi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
