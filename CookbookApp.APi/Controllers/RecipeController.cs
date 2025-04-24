@@ -1,6 +1,7 @@
 ﻿using CookbookApp.APi.Data;
 using CookbookApp.APi.Models;
 using CookbookApp.APi.Models.DTO;
+using CookbookApp.API.Models.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
@@ -18,7 +19,7 @@ namespace CookbookApp.APi.Controllers
         {
            this._context = dbContext; 
         }
-
+        /*
         //GET all recipes
         [HttpGet]
         public IActionResult GetAllRecipes()
@@ -92,29 +93,26 @@ namespace CookbookApp.APi.Controllers
 
             return CreatedAtAction(nameof(GetRecipeById), new {id=recipeDomainModel.Id}, recipeDomainModel);
         }
-        
-        [HttpPost("addRecipe")]
-        public async Task<IActionResult> addRecipe([FromForm] Recipe recipe)
+        */
+        [HttpPost("AddRecipe")]
+        public async Task<IActionResult> AddRecipe([FromBody] Recipe recipe)
         {
-            try {
+            try
+            {
                 _context.Recipes.Add(recipe);
-                var r = await _context.SaveChangesAsync();
-                if (r > 0)
+                var result = await _context.SaveChangesAsync();
+
+                if (result > 0)
                 {
-                    return Ok(new { message = "Recipe added successfully" ,
-    
-                    Recipe_ID = recipe.Id
-                    });
+                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
                 }
-                else
-                {
-                    return BadRequest(new { error = "Failed to add recipe" });
-                }
+                return BadRequest(new { error = "Failed to add recipe" });
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { error = ex.Message });
             }
         }
+
     }
 }
