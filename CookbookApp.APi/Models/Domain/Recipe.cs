@@ -1,4 +1,7 @@
-﻿namespace CookbookApp.APi.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+
+namespace CookbookApp.APi.Models
 {
     public class Recipe
     {

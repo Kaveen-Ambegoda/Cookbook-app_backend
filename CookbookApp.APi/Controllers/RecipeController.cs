@@ -92,5 +92,29 @@ namespace CookbookApp.APi.Controllers
 
             return CreatedAtAction(nameof(GetRecipeById), new {id=recipeDomainModel.Id}, recipeDomainModel);
         }
+        
+        [HttpPost("addRecipe")]
+        public async Task<IActionResult> addRecipe([FromForm] Recipe recipe)
+        {
+            try {
+                _context.Recipes.Add(recipe);
+                var r = await _context.SaveChangesAsync();
+                if (r > 0)
+                {
+                    return Ok(new { message = "Recipe added successfully" ,
+    
+                    Recipe_ID = recipe.Id
+                    });
+                }
+                else
+                {
+                    return BadRequest(new { error = "Failed to add recipe" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }
