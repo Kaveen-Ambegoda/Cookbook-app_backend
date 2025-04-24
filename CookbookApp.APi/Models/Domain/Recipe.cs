@@ -1,11 +1,32 @@
-﻿namespace CookbookApp.APi.Models
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace CookbookApp.API.Models.Domain
 {
     public class Recipe
     {
+        [Key]
         public int Id { get; set; } // Recipe ID
-        public string Name { get; set; } 
-        public string ImageUrl { get; set; } 
+
+        public string Title { get; set; }
+
+        public string Category { get; set; }
+
         public int CookingTime { get; set; } // in minutes
-        public int Servings { get; set; } // number of servings
+
+        public int Portion { get; set; } // Renamed from Servings to match frontend field "portion"
+
+        public string Ingredients { get; set; }
+
+        public string Instructions { get; set; }
+
+        public string Calories { get; set; }
+
+        public string Protein { get; set; }
+
+        public string Fat { get; set; }
+
+        public string Carbs { get; set; } // Renamed from Carbohydrates to match frontend field "carbs"
+        public string ImageUrl { get; set; }
     }
 }
