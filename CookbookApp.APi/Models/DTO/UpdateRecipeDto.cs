@@ -1,8 +1,7 @@
 ﻿namespace CookbookApp.APi.Models.DTO
 {
-    public class RecipeDto
+    public class UpdateRecipeDto
     {
-        public int Id { get; set; } // Recipe ID
         public string Title { get; set; }
         public string Category { get; set; }
         public int CookingTime { get; set; }

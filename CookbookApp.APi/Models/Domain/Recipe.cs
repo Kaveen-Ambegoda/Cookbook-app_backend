@@ -14,7 +14,7 @@ namespace CookbookApp.API.Models.Domain
 
         public int CookingTime { get; set; } // in minutes
 
-        public int Portion { get; set; } // Renamed from Servings to match frontend field "portion"
+        public int Portion { get; set; } 
 
         public string Ingredients { get; set; }
 
@@ -26,7 +26,8 @@ namespace CookbookApp.API.Models.Domain
 
         public string Fat { get; set; }
 
-        public string Carbs { get; set; } // Renamed from Carbohydrates to match frontend field "carbs"
+        public string Carbs { get; set; } 
+
         public string ImageUrl { get; set; }
     }
 }
