@@ -60,9 +60,6 @@ namespace CookbookApp.APi.Controllers
                     Id = recipeDomain.Id,
                     Title = recipeDomain.Title,
                     ImageUrl = recipeDomain.ImageUrl,
-                    CookingTime = recipeDomain.CookingTime,
-                    Portion = recipeDomain.Portion,
-
                 });
             }
 
@@ -189,7 +186,30 @@ namespace CookbookApp.APi.Controllers
 
         //Get All Recipies to HomePage
 
-        
 
+        [HttpGet("homePage")]
+        public IActionResult GetHomePageRecipes()
+        {
+            // Get data from the database
+            var recipesDomain = _context.Recipes.ToList();
+
+            // Map domain models to DTO
+            var homeRecipeDto = new List<GetHomeRecipeDto>();
+
+            foreach (var recipeDomain in recipesDomain)
+            {
+                homeRecipeDto.Add(new GetHomeRecipeDto()
+                {
+                    Id = recipeDomain.Id,
+                    Title = recipeDomain.Title,
+                    ImageUrl = recipeDomain.ImageUrl,
+                    CookingTime = recipeDomain.CookingTime,
+                    Portion = recipeDomain.Portion,
+
+                });
+            }
+
+            return Ok(homeRecipeDto);
+        }
     }
 }
