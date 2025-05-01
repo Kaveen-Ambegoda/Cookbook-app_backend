@@ -4,7 +4,7 @@ using CookbookApp.APi.Models.DTO;
 using CookbookApp.API.Models.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
+using Microsoft.Identity.Client; 
 using System;
 
 namespace CookbookApp.APi.Controllers
@@ -32,13 +32,19 @@ namespace CookbookApp.APi.Controllers
 
                 if (result > 0)
                 {
-                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
+                    return Ok(new 
+                    { message = "Recipe added successfully", recipeId = recipe.Id }
+                    );
                 }
-                return BadRequest(new { error = "Failed to add recipe" });
+                return BadRequest(new 
+                { error = "Failed to add recipe" }
+                );
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(new 
+                { error = ex.Message }
+                );
             }
         }
 
@@ -112,7 +118,10 @@ namespace CookbookApp.APi.Controllers
                 _context.Recipes.Remove(ExistingRecipe);
                 int r = await _context.SaveChangesAsync();
                 if (r > 0) {
-                    return Ok(new { message = "Recipe deleted successfully" });
+                    return Ok(new 
+                    { 
+                        message = "Recipe deleted successfully" 
+                    });
                 }
                 else
                 {
@@ -138,6 +147,7 @@ namespace CookbookApp.APi.Controllers
             try
             {
                 var existingRecipe = await _context.Recipes.FindAsync(id);
+
                 if (existingRecipe == null)
                 {
                     return NotFound(new
@@ -159,6 +169,7 @@ namespace CookbookApp.APi.Controllers
                 existingRecipe.Instructions = updatedRecipe.Instructions;
 
                 _context.Recipes.Update(existingRecipe);
+
                 int r = await _context.SaveChangesAsync();
                 if (r > 0)
                 {
