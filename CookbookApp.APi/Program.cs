@@ -1,4 +1,5 @@
 using CookbookApp.APi.Data;
+using CookbookApp.APi.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +12,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<CookbookDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.Configure<CloudinarySettings>(
+    builder.Configuration.GetSection("Cloudinary"));
+
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
 
 builder.Services.AddCors(options =>
 {
@@ -38,6 +45,8 @@ app.UseHttpsRedirection();
 app.UseCors();
 
 app.UseAuthorization();
+
+app.UseStaticFiles();
 
 app.MapControllers();
 
