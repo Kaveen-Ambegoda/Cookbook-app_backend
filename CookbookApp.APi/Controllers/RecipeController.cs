@@ -1,10 +1,11 @@
 ﻿using CookbookApp.APi.Data;
 using CookbookApp.APi.Models;
 using CookbookApp.APi.Models.DTO;
+using CookbookApp.APi.Services;
 using CookbookApp.API.Models.Domain;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
+using Microsoft.Identity.Client; 
 using System;
 
 namespace CookbookApp.APi.Controllers
@@ -14,11 +15,14 @@ namespace CookbookApp.APi.Controllers
     public class RecipeController : Controller
     {
         private readonly CookbookDbContext _context;
+        private readonly ICloudinaryService _cloudinaryService;
 
-        public RecipeController(CookbookDbContext dbContext)
+        public RecipeController(CookbookDbContext dbContext, ICloudinaryService cloudinaryService)
         {
-            this._context = dbContext;
+            _context = dbContext;
+            _cloudinaryService = cloudinaryService;
         }
+
 
         //Save Recipe
         
@@ -32,19 +36,26 @@ namespace CookbookApp.APi.Controllers
 
                 if (result > 0)
                 {
-                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
+                    return Ok(new 
+                    { message = "Recipe added successfully", recipeId = recipe.Id }
+                    );
                 }
-                return BadRequest(new { error = "Failed to add recipe" });
+                return BadRequest(new 
+                { error = "Failed to add recipe" }
+                );
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(new 
+                { error = ex.Message }
+                );
             }
         }
+        
 
         //Get all recipes
 
-        [HttpGet("recipeMangePage")]
+        [HttpGet("recipeManagePage")]
         public IActionResult GetAllRecipes()
         {
             // Get data from the database
@@ -59,7 +70,7 @@ namespace CookbookApp.APi.Controllers
                 {
                     Id = recipeDomain.Id,
                     Title = recipeDomain.Title,
-                    ImageUrl = recipeDomain.ImageUrl,
+                    Image = recipeDomain.Image,
                 });
             }
 
@@ -80,7 +91,7 @@ namespace CookbookApp.APi.Controllers
             {
                 Id = recipeDomain.Id,
                 Title = recipeDomain.Title,
-                ImageUrl = recipeDomain.ImageUrl,
+                Image = recipeDomain.Image,
                 CookingTime = recipeDomain.CookingTime,
                 Portion = recipeDomain.Portion,
                 Protein = recipeDomain.Protein,
@@ -112,7 +123,10 @@ namespace CookbookApp.APi.Controllers
                 _context.Recipes.Remove(ExistingRecipe);
                 int r = await _context.SaveChangesAsync();
                 if (r > 0) {
-                    return Ok(new { message = "Recipe deleted successfully" });
+                    return Ok(new 
+                    { 
+                        message = "Recipe deleted successfully" 
+                    });
                 }
                 else
                 {
@@ -131,13 +145,17 @@ namespace CookbookApp.APi.Controllers
             }
         }
 
+        /*
+
         //Update Recipe
         [HttpPut("updateRecipe/{id}")]
-        public async Task<IActionResult> updateRecipe(int id, [FromBody] UpdateRecipeDto updatedRecipe)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> updateRecipe(int id, [FromForm] AllRecipeDto updatedRecipe)
         {
             try
             {
                 var existingRecipe = await _context.Recipes.FindAsync(id);
+
                 if (existingRecipe == null)
                 {
                     return NotFound(new
@@ -147,7 +165,7 @@ namespace CookbookApp.APi.Controllers
                 }
 
                 existingRecipe.Title = updatedRecipe.Title;
-                existingRecipe.ImageUrl = updatedRecipe.ImageUrl;
+                existingRecipe.Image = updatedRecipe.Image;
                 existingRecipe.Portion = updatedRecipe.Portion;
                 existingRecipe.CookingTime = updatedRecipe.CookingTime;
                 existingRecipe.Category = updatedRecipe.Category;
@@ -159,6 +177,7 @@ namespace CookbookApp.APi.Controllers
                 existingRecipe.Instructions = updatedRecipe.Instructions;
 
                 _context.Recipes.Update(existingRecipe);
+
                 int r = await _context.SaveChangesAsync();
                 if (r > 0)
                 {
@@ -184,6 +203,8 @@ namespace CookbookApp.APi.Controllers
             }
         }
 
+        */
+
         //Get All Recipies to HomePage
 
 
@@ -202,7 +223,7 @@ namespace CookbookApp.APi.Controllers
                 {
                     Id = recipeDomain.Id,
                     Title = recipeDomain.Title,
-                    ImageUrl = recipeDomain.ImageUrl,
+                    Image = recipeDomain.Image,
                     CookingTime = recipeDomain.CookingTime,
                     Portion = recipeDomain.Portion,
 
@@ -211,5 +232,114 @@ namespace CookbookApp.APi.Controllers
 
             return Ok(homeRecipeDto);
         }
+
+        
+
+        [HttpPost("AddRecipe1")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> AddRecipe1([FromForm] AllRecipeDto dto)
+        {
+            try
+            {
+                string imageUrl = null;
+
+                if (dto.Image?.Length > 0)
+                {
+                    // Upload image to Cloudinary
+                    imageUrl = await _cloudinaryService.UploadImageAsync(dto.Image);
+                }
+
+                var recipe = new Recipe
+                {
+                    Title = dto.Title,
+                    Ingredients = dto.Ingredients,
+                    Instructions = dto.Instructions,
+                    Category = dto.Category,
+                    CookingTime = dto.CookingTime,
+                    Portion = dto.Portion,
+                    Calories = dto.Calories,
+                    Protein = dto.Protein,
+                    Fat = dto.Fat,
+                    Carbs = dto.Carbs,
+                    Image = imageUrl
+                };
+
+                _context.Recipes.Add(recipe);
+                if (await _context.SaveChangesAsync() > 0)
+                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
+
+                return BadRequest(new { error = "Failed to add recipe" });
+            }
+            catch (Exception ex)
+            {
+                var errorMessage = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { error = errorMessage });
+            }
+        }
+
+        //Update Recipe New
+
+
+        [HttpPut("updateRecipe/{id}")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> updateRecipe(int id, [FromForm] AllRecipeDto updatedRecipe)
+        {
+            try
+            {
+                var existingRecipe = await _context.Recipes.FindAsync(id);
+
+                if (existingRecipe == null)
+                {
+                    return NotFound(new
+                    {
+                        Message = "No Recipe Found"
+                    });
+                }
+
+                // Handle image upload if a new image is provided
+                if (updatedRecipe.Image?.Length > 0)
+                {
+                    // Upload new image to Cloudinary
+                    string imageUrl = await _cloudinaryService.UploadImageAsync(updatedRecipe.Image);
+                    existingRecipe.Image = imageUrl;
+                }
+
+                // Update the rest of the fields
+                existingRecipe.Title = updatedRecipe.Title;
+                existingRecipe.Portion = updatedRecipe.Portion;
+                existingRecipe.CookingTime = updatedRecipe.CookingTime;
+                existingRecipe.Category = updatedRecipe.Category;
+                existingRecipe.Calories = updatedRecipe.Calories;
+                existingRecipe.Carbs = updatedRecipe.Carbs;
+                existingRecipe.Fat = updatedRecipe.Fat;
+                existingRecipe.Protein = updatedRecipe.Protein;
+                existingRecipe.Ingredients = updatedRecipe.Ingredients;
+                existingRecipe.Instructions = updatedRecipe.Instructions;
+
+                _context.Recipes.Update(existingRecipe);
+
+                if (await _context.SaveChangesAsync() > 0)
+                {
+                    return Ok(new
+                    {
+                        Message = "Recipe Updated Successfully",
+                        RecipeId = existingRecipe.Id
+                    });
+                }
+
+                return BadRequest(new
+                {
+                    Error = "Failed to update recipe"
+                });
+            }
+            catch (Exception ex)
+            {
+                var errorMessage = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { Error = errorMessage });
+            }
+        }
+
+
+
     }
 }
