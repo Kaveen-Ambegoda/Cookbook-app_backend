@@ -3,10 +3,12 @@ using CookbookApp.APi.Models;
 using CookbookApp.APi.Models.DTO;
 using CookbookApp.APi.Services;
 using CookbookApp.API.Models.Domain;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client; 
 using System;
+using System.Security.Claims;
 
 namespace CookbookApp.APi.Controllers
 {
@@ -51,10 +53,10 @@ namespace CookbookApp.APi.Controllers
                 );
             }
         }
+
+
+        //Get all recipes to ManageREcipe page
         
-
-        //Get all recipes
-
         [HttpGet("recipeManagePage")]
         public IActionResult GetAllRecipes()
         {
@@ -76,6 +78,35 @@ namespace CookbookApp.APi.Controllers
 
             return Ok(getRecipesDto);
         }
+
+        
+        /*
+        //Get all recipes to ManageREcipe page filter by user Id
+
+        [HttpGet("recipeManagePage")]
+        [Authorize]
+        public async Task<IActionResult> GetMyRecipes()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized(new { error = "User not found in token" });
+            }
+
+            var userRecipes = await _context.Recipes
+                .Where(r => r.UserId == userId)
+                .ToListAsync();
+
+            var getRecipesDto = userRecipes.Select(recipeDomain => new GetRecipeDto
+            {
+                Id = recipeDomain.Id,
+                Title = recipeDomain.Title,
+                Image = recipeDomain.Image
+            }).ToList();
+
+            return Ok(getRecipesDto);
+        }
+        */
 
         //Get a single Recipe
         [HttpGet("{id}")]
@@ -233,8 +264,8 @@ namespace CookbookApp.APi.Controllers
             return Ok(homeRecipeDto);
         }
 
+        //Add new recipe throgh the manage recipe page
         
-
         [HttpPost("AddRecipe1")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> AddRecipe1([FromForm] AllRecipeDto dto)
@@ -276,7 +307,57 @@ namespace CookbookApp.APi.Controllers
                 return BadRequest(new { error = errorMessage });
             }
         }
+        
+        /*
+        //AddRecipe1 for manage recipe page with each user's userID
+        [HttpPost("AddRecipe1")]
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> AddRecipe1([FromForm] AllRecipeDto dto)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                    return Unauthorized();
 
+                string imageUrl = null;
+
+                if (dto.Image?.Length > 0)
+                {
+                    imageUrl = await _cloudinaryService.UploadImageAsync(dto.Image);
+                }
+
+                var recipe = new Recipe
+                {
+                    Title = dto.Title,
+                    Ingredients = dto.Ingredients,
+                    Instructions = dto.Instructions,
+                    Category = dto.Category,
+                    CookingTime = dto.CookingTime,
+                    Portion = dto.Portion,
+                    Calories = dto.Calories,
+                    Protein = dto.Protein,
+                    Fat = dto.Fat,
+                    Carbs = dto.Carbs,
+                    Image = imageUrl,
+                    UserId = userId // 💡 add user ID
+                };
+
+                _context.Recipes.Add(recipe);
+                if (await _context.SaveChangesAsync() > 0)
+                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
+
+                return BadRequest(new { error = "Failed to add recipe" });
+            }
+            catch (Exception ex)
+            {
+                var errorMessage = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { error = errorMessage });
+            }
+        }
+
+        */
         //Update Recipe New
 
 
@@ -338,6 +419,34 @@ namespace CookbookApp.APi.Controllers
                 return BadRequest(new { Error = errorMessage });
             }
         }
+
+        //search the recipe by keyword
+        
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchRecipes([FromQuery] string keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+                return BadRequest(new { error = "Keyword is required" });
+
+            var lowerKeyword = keyword.ToLower();
+
+            var matchedRecipes = await _context.Recipes
+                .Where(r =>
+                    r.Title.ToLower().Contains(lowerKeyword) ||
+                    r.Ingredients.ToLower().Contains(lowerKeyword) ||
+                    r.Instructions.ToLower().Contains(lowerKeyword)
+                )
+                .Select(r => new GetRecipeDto
+                {
+                    Id = r.Id,
+                    Title = r.Title,
+                    Image = r.Image
+                })
+                .ToListAsync();
+
+            return Ok(matchedRecipes);
+        }
+
 
 
 

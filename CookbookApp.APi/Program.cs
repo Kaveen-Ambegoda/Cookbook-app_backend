@@ -26,7 +26,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:8080") // your frontend domain
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
