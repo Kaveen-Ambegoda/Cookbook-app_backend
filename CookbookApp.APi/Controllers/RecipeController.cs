@@ -2,7 +2,8 @@
 using CookbookApp.APi.Models;
 using CookbookApp.APi.Models.DTO;
 using CookbookApp.APi.Services;
-using CookbookApp.API.Models.Domain;
+using CookbookApp.APi.Models.Domain;
+using CookbookAppBackend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,36 +28,40 @@ namespace CookbookApp.APi.Controllers
 
 
         //Save Recipe
-        
+        [Authorize]
         [HttpPost("AddRecipe")]
         public async Task<IActionResult> AddRecipe([FromBody] Recipe recipe)
         {
             try
             {
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value); // Get logged-in user's ID
+                recipe.UserID = userId;
+
                 _context.Recipes.Add(recipe);
                 var result = await _context.SaveChangesAsync();
 
                 if (result > 0)
                 {
-                    return Ok(new 
+                    return Ok(new
                     { message = "Recipe added successfully", recipeId = recipe.Id }
                     );
                 }
-                return BadRequest(new 
+                return BadRequest(new
                 { error = "Failed to add recipe" }
                 );
             }
             catch (Exception ex)
             {
-                return BadRequest(new 
+                return BadRequest(new
                 { error = ex.Message }
                 );
             }
         }
 
 
-        //Get all recipes to ManageREcipe page
+        //Get all recipes to ManageRecipe page
         
+
         [HttpGet("recipeManagePage")]
         public IActionResult GetAllRecipes()
         {
@@ -138,43 +143,35 @@ namespace CookbookApp.APi.Controllers
         }
 
         //Delete recipe by ID
-
+        [Authorize]
         [HttpDelete("deleteRecipe/{id}")]
         public async Task<IActionResult> deleteProduct(int id)
         {
             try
             {
-                var ExistingRecipe = await _context.Recipes.FindAsync(id);
-                if (ExistingRecipe == null)
-                {
-                    return NotFound(new
-                    { error = "Recipe not found"
-                    });
-                }
-                _context.Recipes.Remove(ExistingRecipe);
-                int r = await _context.SaveChangesAsync();
-                if (r > 0) {
-                    return Ok(new 
-                    { 
-                        message = "Recipe deleted successfully" 
-                    });
-                }
-                else
-                {
-                    return BadRequest(new
-                    {
-                        error = "Failed to delete recipe"
-                    });
-                }
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
+                var recipe = await _context.Recipes.FindAsync(id);
+                if (recipe == null)
+                    return NotFound(new { error = "Recipe not found" });
+
+                if (recipe.UserID != userId)
+                    return Unauthorized(new { error = "You are not authorized to delete this recipe" });
+
+                _context.Recipes.Remove(recipe);
+                int r = await _context.SaveChangesAsync();
+
+                if (r > 0)
+                    return Ok(new { message = "Recipe deleted successfully" });
+
+                return BadRequest(new { error = "Failed to delete recipe" });
             }
             catch (Exception ex)
             {
-                return BadRequest(new
-                { error = ex.Message
-                });
+                return BadRequest(new { error = ex.Message });
             }
         }
+
 
         /*
 
@@ -266,12 +263,17 @@ namespace CookbookApp.APi.Controllers
 
         //Add new recipe throgh the manage recipe page
         
+
+        [Authorize]
+
         [HttpPost("AddRecipe1")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> AddRecipe1([FromForm] AllRecipeDto dto)
         {
             try
             {
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
                 string imageUrl = null;
 
                 if (dto.Image?.Length > 0)
@@ -292,7 +294,8 @@ namespace CookbookApp.APi.Controllers
                     Protein = dto.Protein,
                     Fat = dto.Fat,
                     Carbs = dto.Carbs,
-                    Image = imageUrl
+                    Image = imageUrl,
+                    UserID = userId
                 };
 
                 _context.Recipes.Add(recipe);
@@ -361,31 +364,37 @@ namespace CookbookApp.APi.Controllers
         //Update Recipe New
 
 
+        [Authorize]
         [HttpPut("updateRecipe/{id}")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> updateRecipe(int id, [FromForm] AllRecipeDto updatedRecipe)
         {
             try
             {
-                var existingRecipe = await _context.Recipes.FindAsync(id);
+                 // Get logged-in user ID from token claims
+                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
+                //  Find the recipe to update
+                var existingRecipe = await _context.Recipes.FindAsync(id);
                 if (existingRecipe == null)
                 {
-                    return NotFound(new
-                    {
-                        Message = "No Recipe Found"
-                    });
+                    return NotFound(new { Message = "No Recipe Found" });
                 }
 
-                // Handle image upload if a new image is provided
+                //  Check ownership
+                if (existingRecipe.UserID != userId)
+                {
+                    return Unauthorized(new { error = "You are not authorized to update this recipe" });
+                }
+
+                //  Handle image upload if provided
                 if (updatedRecipe.Image?.Length > 0)
                 {
-                    // Upload new image to Cloudinary
                     string imageUrl = await _cloudinaryService.UploadImageAsync(updatedRecipe.Image);
                     existingRecipe.Image = imageUrl;
                 }
 
-                // Update the rest of the fields
+                //  Update all other fields
                 existingRecipe.Title = updatedRecipe.Title;
                 existingRecipe.Portion = updatedRecipe.Portion;
                 existingRecipe.CookingTime = updatedRecipe.CookingTime;
@@ -397,8 +406,8 @@ namespace CookbookApp.APi.Controllers
                 existingRecipe.Ingredients = updatedRecipe.Ingredients;
                 existingRecipe.Instructions = updatedRecipe.Instructions;
 
+                //  Save changes
                 _context.Recipes.Update(existingRecipe);
-
                 if (await _context.SaveChangesAsync() > 0)
                 {
                     return Ok(new
@@ -408,10 +417,7 @@ namespace CookbookApp.APi.Controllers
                     });
                 }
 
-                return BadRequest(new
-                {
-                    Error = "Failed to update recipe"
-                });
+                return BadRequest(new { Error = "Failed to update recipe" });
             }
             catch (Exception ex)
             {
@@ -445,6 +451,29 @@ namespace CookbookApp.APi.Controllers
                 .ToListAsync();
 
             return Ok(matchedRecipes);
+        }
+
+
+
+        //let users only view their recipes
+
+        [Authorize]
+        [HttpGet("myRecipes")]
+        public IActionResult GetMyRecipes()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+            var recipes = _context.Recipes
+                .Where(r => r.UserID == userId)
+                .Select(r => new GetRecipeDto
+                {
+                    Id = r.Id,
+                    Title = r.Title,
+                    Image = r.Image
+                })
+                .ToList();
+
+            return Ok(recipes);
         }
 
 

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
-namespace CookbookApp.API.Models.Domain
+using CookbookAppBackend.Models;
+namespace CookbookApp.APi.Models.Domain
 {
     public class Recipe
     {
@@ -18,7 +18,10 @@ namespace CookbookApp.API.Models.Domain
         public double Fat { get; set; }
         public double Carbs { get; set; }
         public string Image { get; set; }
-        public string UserId { get; set; }
+
+        public int UserID { get; set; }
+
+        public User User {get; set; }
 
     }
 }

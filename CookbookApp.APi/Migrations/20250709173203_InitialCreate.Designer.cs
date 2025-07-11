@@ -4,6 +4,7 @@ using CookbookApp.APi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CookbookApp.APi.Migrations
 {
     [DbContext(typeof(CookbookDbContext))]
-    partial class CookbookDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250709173203_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,6 +24,57 @@ namespace CookbookApp.APi.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("CookbookApp.API.Models.Domain.Recipe", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("Calories")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Carbs")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CookingTime")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Fat")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Image")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Ingredients")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Instructions")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Portion")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Protein")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Recipes");
+                });
 
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Comment", b =>
                 {
@@ -97,68 +151,6 @@ namespace CookbookApp.APi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Forums");
-                });
-
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Recipe", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<double>("Calories")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Carbs")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("CookingTime")
-                        .HasColumnType("int");
-
-                    b.Property<double>("Fat")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Image")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Ingredients")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Instructions")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Portion")
-                        .HasColumnType("int");
-
-                    b.Property<double>("Protein")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-<<<<<<< HEAD
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-=======
-                    b.Property<int>("UserID")
-                        .HasColumnType("int");
->>>>>>> origin/main
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserID");
-
-                    b.ToTable("Recipes");
                 });
 
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Reply", b =>
@@ -259,17 +251,6 @@ namespace CookbookApp.APi.Migrations
                         .IsRequired();
 
                     b.Navigation("Forum");
-                });
-
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Recipe", b =>
-                {
-                    b.HasOne("CookbookAppBackend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Reply", b =>
