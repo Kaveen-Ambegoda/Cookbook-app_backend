@@ -6,49 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CookbookApp.APi.Migrations
 {
     /// <inheritdoc />
-    public partial class CommunityForum : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Calories",
-                table: "Recipes");
-
-            migrationBuilder.DropColumn(
-                name: "Carbs",
-                table: "Recipes");
-
-            migrationBuilder.DropColumn(
-                name: "Category",
-                table: "Recipes");
-
-            migrationBuilder.DropColumn(
-                name: "Fat",
-                table: "Recipes");
-
-            migrationBuilder.DropColumn(
-                name: "Ingredients",
-                table: "Recipes");
-
-            migrationBuilder.DropColumn(
-                name: "Instructions",
-                table: "Recipes");
-
-            migrationBuilder.DropColumn(
-                name: "Protein",
-                table: "Recipes");
-
-            migrationBuilder.RenameColumn(
-                name: "Title",
-                table: "Recipes",
-                newName: "Name");
-
-            migrationBuilder.RenameColumn(
-                name: "Portion",
-                table: "Recipes",
-                newName: "Servings");
-
             migrationBuilder.CreateTable(
                 name: "Forums",
                 columns: table => new
@@ -68,6 +30,48 @@ namespace CookbookApp.APi.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Forums", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Recipes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CookingTime = table.Column<int>(type: "int", nullable: false),
+                    Portion = table.Column<int>(type: "int", nullable: false),
+                    Ingredients = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Instructions = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Calories = table.Column<double>(type: "float", nullable: false),
+                    Protein = table.Column<double>(type: "float", nullable: false),
+                    Fat = table.Column<double>(type: "float", nullable: false),
+                    Carbs = table.Column<double>(type: "float", nullable: false),
+                    Image = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Recipes", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -153,75 +157,22 @@ namespace CookbookApp.APi.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Recipes");
+
+            migrationBuilder.DropTable(
                 name: "Replies");
 
             migrationBuilder.DropTable(
                 name: "UserFavorites");
 
             migrationBuilder.DropTable(
+                name: "Users");
+
+            migrationBuilder.DropTable(
                 name: "Comments");
 
             migrationBuilder.DropTable(
                 name: "Forums");
-
-            migrationBuilder.RenameColumn(
-                name: "Servings",
-                table: "Recipes",
-                newName: "Portion");
-
-            migrationBuilder.RenameColumn(
-                name: "Name",
-                table: "Recipes",
-                newName: "Title");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Calories",
-                table: "Recipes",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Carbs",
-                table: "Recipes",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Category",
-                table: "Recipes",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Fat",
-                table: "Recipes",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Ingredients",
-                table: "Recipes",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Instructions",
-                table: "Recipes",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "Protein",
-                table: "Recipes",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
         }
     }
 }

@@ -5,24 +5,18 @@
 namespace CookbookApp.APi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddImageColumnToRecipe : Migration
+    public partial class AddUserToRecipe : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "ImageUrl",
-                table: "Recipes",
-                newName: "Image");
+
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Image",
-                table: "Recipes",
-                newName: "ImageUrl");
+
         }
     }
 }
