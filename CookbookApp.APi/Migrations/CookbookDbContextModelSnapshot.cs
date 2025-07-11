@@ -145,14 +145,9 @@ namespace CookbookApp.APi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-<<<<<<< HEAD
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-=======
+
                     b.Property<int>("UserID")
                         .HasColumnType("int");
->>>>>>> origin/main
 
                     b.HasKey("Id");
 
