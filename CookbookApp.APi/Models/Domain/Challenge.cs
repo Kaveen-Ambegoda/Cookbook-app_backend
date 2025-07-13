@@ -19,11 +19,13 @@ namespace CookbookApp.APi.Models.Domain
         public  required string ChallengeCategory { get; set; }
 
         [Required]
-        [StringLength(50)]
+        [StringLength(100)]
         public required string ReasonForChoosing { get; set; }
 
         [Required]
         public required bool TermsAccepted { get; set; }
+        [Required]
+        public required string ChallengeName { get; set; }
 
 
 

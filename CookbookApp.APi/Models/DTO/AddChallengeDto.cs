@@ -22,6 +22,8 @@ namespace CookbookApp.APi.Models.DTO
 
         [Required]
         public required bool TermsAccepted { get; set; }
+        [Required]
+        public required string ChallengeName { get; set; }
 
     }
 }

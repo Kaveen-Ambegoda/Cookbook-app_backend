@@ -2,6 +2,10 @@
 using CookbookApp.APi.Models;
 using CookbookApp.API.Models.Domain;
 using CookbookApp.APi.Models.Domain;
+using CookbookApp.APi.Models.DTO;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 
 namespace CookbookApp.APi.Data
@@ -12,7 +16,6 @@ namespace CookbookApp.APi.Data
 
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<Challenge> Challenges { get; set; }
-        
-        
+       
     }
 }
