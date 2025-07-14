@@ -16,6 +16,6 @@ namespace CookbookApp.APi.Data
 
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<Challenge> Challenges { get; set; }
-       
+        public DbSet<SubmitForum> SubmitForums { get; set; } // Add this line
     }
 }
