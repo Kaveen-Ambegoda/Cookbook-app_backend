@@ -56,7 +56,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Cookbook API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Cookbook API", Version = "1.0.0" });
 });
 
 var app = builder.Build();
