@@ -4,6 +4,7 @@ using CookbookApp.APi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CookbookApp.APi.Migrations
 {
     [DbContext(typeof(CookbookDbContext))]
-    partial class CookbookDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250715025024_AddSubmissionTables")]
+    partial class AddSubmissionTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -115,38 +118,6 @@ namespace CookbookApp.APi.Migrations
                     b.ToTable("Challenges");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Rating", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChallengeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("RatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Stars")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("SubmissionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubmissionId");
-
-                    b.ToTable("Ratings");
-                });
-
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Submission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -211,6 +182,9 @@ namespace CookbookApp.APi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("VotesCount")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Submissions");
@@ -243,58 +217,7 @@ namespace CookbookApp.APi.Migrations
                     b.ToTable("SubmissionVotes");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Vote", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChallengeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("SubmissionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("VotedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubmissionId");
-
-                    b.ToTable("Votes");
-                });
-
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Rating", b =>
-                {
-                    b.HasOne("CookbookApp.APi.Models.Domain.Submission", "Submission")
-                        .WithMany("Ratings")
-                        .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Submission");
-                });
-
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.SubmissionVote", b =>
-                {
-                    b.HasOne("CookbookApp.APi.Models.Domain.Submission", "Submission")
-                        .WithMany()
-                        .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Submission");
-                });
-
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Vote", b =>
                 {
                     b.HasOne("CookbookApp.APi.Models.Domain.Submission", "Submission")
                         .WithMany("Votes")
@@ -307,8 +230,6 @@ namespace CookbookApp.APi.Migrations
 
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Submission", b =>
                 {
-                    b.Navigation("Ratings");
-
                     b.Navigation("Votes");
                 });
 #pragma warning restore 612, 618
