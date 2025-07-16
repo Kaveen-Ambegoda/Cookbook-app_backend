@@ -5,7 +5,7 @@
 namespace CookbookApp.APi.Migrations
 {
     /// <inheritdoc />
-    public partial class updateBackend : Migration
+    public partial class mergeFirst : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

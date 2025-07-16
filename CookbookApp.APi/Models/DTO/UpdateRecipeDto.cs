@@ -1,15 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using CookbookAppBackend.Models;
-namespace CookbookApp.APi.Models.Domain
+﻿namespace CookbookApp.APi.Models.DTO
 {
-    public class Recipe
+    public class UpdateRecipeDto
     {
-        [Key]
-        public int Id { get; set; } // Recipe ID
         public string Title { get; set; }
         public string Category { get; set; }
-        public int CookingTime { get; set; } // in minutes
+        public int CookingTime { get; set; }
         public int Portion { get; set; }
         public string Ingredients { get; set; }
         public string Instructions { get; set; }
@@ -18,10 +13,5 @@ namespace CookbookApp.APi.Models.Domain
         public double Fat { get; set; }
         public double Carbs { get; set; }
         public string Image { get; set; }
-
-        // This links each recipe to a user (owner)
-        public int UserID { get; set; }
-        public User User {get; set; }
-
     }
 }

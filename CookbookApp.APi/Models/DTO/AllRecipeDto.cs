@@ -1,4 +1,4 @@
-﻿public class AddRecipeRequestDto
+﻿public class AllRecipeDto
 {
     public string Title { get; set; }
     public string Category { get; set; }
@@ -10,5 +10,5 @@
     public double Protein { get; set; }
     public double Fat { get; set; }
     public double Carbs { get; set; }
-    public string Image { get; set; }
+    public IFormFile Image { get; set; }
 }
