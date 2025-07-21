@@ -21,7 +21,9 @@ namespace CookbookApp.APi.Models.Domain
 
         // This links each recipe to a user (owner)
         public int UserID { get; set; }
-        public User User {get; set; }
+        public User User { get; set; }
+
+        public ICollection<Review> Reviews { get; set; } = new List<Review>(); // navigation property
 
     }
 }

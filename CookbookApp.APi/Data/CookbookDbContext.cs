@@ -16,6 +16,7 @@ namespace CookbookApp.APi.Data
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Reply> Replies { get; set; }
         public DbSet<UserFavorite> UserFavorites { get; set; }
+        public DbSet<Review> Reviews { get; set; }
         public DbSet<FavoriteRecipe> FavoriteRecipes { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,8 +41,23 @@ namespace CookbookApp.APi.Data
                 .HasOne(fr => fr.User)
                 .WithMany()
                 .HasForeignKey(fr => fr.UserId)
-                .OnDelete(DeleteBehavior.Restrict); // 👈 This is the key to fix the migration error
+                .OnDelete(DeleteBehavior.Restrict); // This is the key to fix the migration error
+
+            // Review → Recipe (can keep cascade)
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Recipe)
+                .WithMany(r => r.Reviews)
+                .HasForeignKey(r => r.RecipeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Review → User (FIXED)
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
+
 
     }
 }
