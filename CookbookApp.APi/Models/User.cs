@@ -11,6 +11,12 @@ namespace CookbookAppBackend.Models
         [Required]
         public required string Email { get; set; }
         [Required]
+
+        public bool IsEmailConfirmed { get; set; }
+
+        public string? EmailVerificationToken { get; set; }
+
+        public DateTime? EmailVerificationTokenExpiryTime { get; set; }
         public string PasswordHash { get; set; }
         public string Role { get; set; }  // 'Admin', 'User'
 
