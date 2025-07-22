@@ -12,10 +12,6 @@ namespace CookbookApp.APi.Models.Domain
         public required string FullName { get; set; }
 
         [Required]
-        [EmailAddress]
-        public required string Email { get; set; }
-
-        [Required]
         public  required string ChallengeCategory { get; set; }
 
         [Required]

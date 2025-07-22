@@ -4,6 +4,7 @@ using CookbookApp.APi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CookbookApp.APi.Migrations
 {
     [DbContext(typeof(CookbookDbContext))]
-    partial class CookbookDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250722094421_Updatechallenges")]
+    partial class Updatechallenges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -305,7 +308,7 @@ namespace CookbookApp.APi.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("FullName")
+                    b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -338,12 +341,36 @@ namespace CookbookApp.APi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.ToTable("Submissions");
+                });
+
+            modelBuilder.Entity("CookbookApp.APi.Models.Domain.SubmissionVote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("SubmissionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UserEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("SubmissionVotes");
                 });
 
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.UserFavorite", b =>
@@ -494,6 +521,17 @@ namespace CookbookApp.APi.Migrations
                         .IsRequired();
 
                     b.Navigation("Comment");
+                });
+
+            modelBuilder.Entity("CookbookApp.APi.Models.Domain.SubmissionVote", b =>
+                {
+                    b.HasOne("CookbookApp.APi.Models.Domain.Submission", "Submission")
+                        .WithMany()
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Submission");
                 });
 
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.UserFavorite", b =>

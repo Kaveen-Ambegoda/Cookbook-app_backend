@@ -10,10 +10,6 @@ namespace CookbookApp.APi.Models.DTO
         public required string FullName { get; set; }
 
         [Required]
-        [EmailAddress]
-        public required string Email { get; set; }
-
-        [Required]
         public required string ChallengeCategory { get; set; }
 
         [Required]

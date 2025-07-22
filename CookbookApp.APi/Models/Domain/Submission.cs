@@ -7,7 +7,7 @@ namespace CookbookApp.APi.Models.Domain
         public Guid Id { get; set; }
         
         [Required]
-        public string DisplayName { get; set; }
+        public string FullName { get; set; }
         
         [Required]
         public string RecipeName { get; set; }
@@ -29,12 +29,6 @@ namespace CookbookApp.APi.Models.Domain
         [Required]
         public string ChallengeCategory { get; set; }
         
-        [Required]
-        public string UserEmail { get; set; }
-        
-        [Required]
-        public string UserFullName { get; set; }
-        
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         
@@ -50,6 +44,13 @@ namespace CookbookApp.APi.Models.Domain
         // Computed properties
         public int VotesCount => Votes?.Count ?? 0;
         public double AverageRating => Ratings?.Any() == true ? Ratings.Average(r => r.Stars) : 0;
+
+        // Add these properties:
+        [Required]
+        public int UserId { get; set; } // Foreign key to User
+
+        // If you want to store Email directly (not recommended, but possible):
+        public string UserEmail { get; set; }
     }
     
 }

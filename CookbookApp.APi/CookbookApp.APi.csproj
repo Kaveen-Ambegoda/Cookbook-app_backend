@@ -24,7 +24,7 @@
 		</PackageReference>
 
 		<!-- Cloudinary for image uploads -->
-		<PackageReference Include="CloudinaryDotNet" Version="1.27.5" />
+		<PackageReference Include="CloudinaryDotNet" Version="1.27.6" />
 
 		<!-- Swagger for API testing -->
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />

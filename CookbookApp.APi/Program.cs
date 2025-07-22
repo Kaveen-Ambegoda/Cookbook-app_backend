@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using CookbookApp.APi.Data;
 using CookbookApp.APi.Services;
+using CloudinaryDotNet;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +17,17 @@ builder.Services.AddDbContext<CookbookDbContext>(options =>
 builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
+// Add Cloudinary config
+builder.Services.AddSingleton(x =>
+{
+    var config = builder.Configuration.GetSection("Cloudinary");
+    return new Cloudinary(new Account(
+        config["CloudName"],
+        config["ApiKey"],
+        config["ApiSecret"]
+    ));
+});
 
 // Add CORS
 builder.Services.AddCors(options =>

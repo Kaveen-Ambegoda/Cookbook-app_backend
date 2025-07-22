@@ -20,7 +20,6 @@ namespace CookbookApp.APi.Data
 
         public DbSet<Challenge> Challenges { get; set; }
         public DbSet<Submission> Submissions { get; set; }
-        public DbSet<SubmissionVote> SubmissionVotes { get; set; }
         public DbSet<Vote> Votes { get; set; }
         public DbSet<Rating> Ratings { get; set; }
 
@@ -32,7 +31,7 @@ namespace CookbookApp.APi.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            
             // Recipe → User (with optional cascading if needed)
             modelBuilder.Entity<Recipe>()
                 .HasOne(r => r.User)
