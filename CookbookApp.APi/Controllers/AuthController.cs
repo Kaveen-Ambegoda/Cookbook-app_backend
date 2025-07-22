@@ -9,6 +9,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using SendGrid;
+using SendGrid.Helpers.Mail;
+using System.Threading.Tasks;
 
 namespace CookbookAppBackend.Controllers
 {
@@ -30,6 +33,11 @@ namespace CookbookAppBackend.Controllers
         {
             var user = _context.Users.SingleOrDefault(x => x.Email == login.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(login.Password, user.PasswordHash))
+            {
+                return Unauthorized();
+            }
+
+            if (!user.IsEmailConfirmed)
             {
                 return Unauthorized();
             }
@@ -64,7 +72,7 @@ namespace CookbookAppBackend.Controllers
             });
         }
         [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterModel register)
+        public async Task<IActionResult> Register([FromBody] RegisterModel register)
         {
             try
             {
@@ -74,17 +82,24 @@ namespace CookbookAppBackend.Controllers
                     return Conflict("User already exists");
                 }
 
+                var token = GenerateVerificationToken();
+
                 var user = new User
                 {
                     Username = register.Username,
                     Email = register.Email,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(register.Password),
                     Role = "User",
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                    EmailVerificationToken = token,
+                    EmailVerificationTokenExpiryTime = DateTime.UtcNow.AddDays(1), // Token valid for 1 day
+                    IsEmailConfirmed = false, // Initially set to false
                 };
 
                 _context.Users.Add(user);
                 _context.SaveChanges();
+
+                await SendVerificationEmailAsync(user.Email, token);
 
                 return Ok(new { Message = "User registered successfully" });
             }
@@ -94,6 +109,7 @@ namespace CookbookAppBackend.Controllers
                 return StatusCode(500, $"Registration failed: {ex.Message} | Inner: {innerMessage}");
             }
 
+            
         }
 
         [HttpPost("refresh")]
@@ -109,12 +125,10 @@ namespace CookbookAppBackend.Controllers
             var userId = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
             var user = _context.Users.SingleOrDefault(u => u.Id.ToString() == userId);
 
-
             if (user == null || user.RefreshToken != tokenModel.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.Now)
                 return Unauthorized("Invalid refresh token");
 
-
-            var newToken = GenerateJwtToken(principal.Claims.ToList());
+            var newJwtToken = GenerateJwtToken(principal.Claims.ToList());
             var newRefreshToken = GenerateRefreshToken();
 
             user.RefreshToken = newRefreshToken;
@@ -123,16 +137,10 @@ namespace CookbookAppBackend.Controllers
 
             return Ok(new
             {
-                token = new JwtSecurityTokenHandler().WriteToken(newToken),
+                token = new JwtSecurityTokenHandler().WriteToken(newJwtToken),
                 refreshToken = newRefreshToken
-            }
-                );
-
-
-
+            });
         }
-
-
 
 
         private string GenerateRefreshToken()
@@ -183,6 +191,58 @@ namespace CookbookAppBackend.Controllers
                 return null;
             }
         }
-                            
+        private string GenerateVerificationToken()
+        {
+            return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+        }
+
+        private async Task SendVerificationEmailAsync(string toEmail, string token)
+        {
+            var verifyUrl = $"http://localhost:8080/verify-email?token={token}";
+
+            var client = new SendGridClient(_configuration["SendGrid:ApiKey"]);
+            var from = new EmailAddress(_configuration["SendGrid:SenderEmail"], _configuration["SendGrid:SenderName"]);
+            var to = new EmailAddress(toEmail);
+            var subject = "Verify your email - CookBook App";
+            var htmlContent = $@"
+        <p>Hi there,</p>
+        <p>Thanks for registering on CookBook. Please confirm your email address by clicking the link below:</p>
+        <p><a href='{verifyUrl}'>Verify Email</a></p>
+        <p>This link will expire in 24 hours.</p>";
+
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, "", htmlContent);
+            var response = await client.SendEmailAsync(msg);
+
+            if ((int)response.StatusCode >= 400)
+            {
+                Console.WriteLine($"Failed to send email: {response.StatusCode}");
+            }
+        }
+
+
+        [HttpPost("verify-email")]
+        public IActionResult VerifyEmail([FromQuery] string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return BadRequest("Token is required");
+
+            var user = _context.Users.SingleOrDefault(u => u.EmailVerificationToken == token);
+
+            if (user == null)
+                return NotFound("Invalid token");
+
+            if (user.EmailVerificationTokenExpiryTime < DateTime.UtcNow)
+                return BadRequest("Token has expired");
+
+            user.IsEmailConfirmed = true;
+            user.EmailVerificationToken = null;
+            user.EmailVerificationTokenExpiryTime = null;
+
+            _context.SaveChanges();
+
+            return Ok(new { message = "Email verified successfully!" });
+        }
+
     }
+
 }
