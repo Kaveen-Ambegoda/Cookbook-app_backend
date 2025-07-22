@@ -1,17 +1,15 @@
 using CookbookApp.APi.Data;
 using CookbookApp.APi.Models.Domain;
 using CookbookApp.APi.Models.DTO;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace CookbookApp.APi.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/community")] // Changed route for consistency
     public class CommentController : ControllerBase
     {
         private readonly CookbookDbContext dbContext;
@@ -21,76 +19,66 @@ namespace CookbookApp.APi.Controllers
             this.dbContext = dbContext;
         }
 
-        // GET: api/comment/forum/{forumId}
-        [HttpGet("forum/{forumId}")]
-        public async Task<IActionResult> GetComments(Guid forumId)
+        private (int UserId, string Username) GetCurrentUser()
         {
-            var forum = await dbContext.Forums.FindAsync(forumId);
-            if (forum == null)
-            {
-                return NotFound("Forum not found");
-            }
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var username = User.FindFirstValue(ClaimTypes.Name);
+            return (int.TryParse(userIdStr, out var id) ? id : 0, username);
+        }
 
+        [HttpGet("forums/{forumId}/comments")]
+        public async Task<IActionResult> GetCommentsForForum(Guid forumId)
+        {
             var comments = await dbContext.Comments
                 .Where(c => c.ForumId == forumId)
                 .Include(c => c.Replies)
-                .ToListAsync();
-
-            var commentDtos = comments.Select(comment => new CommentDto
-            {
-                Id = comment.Id,
-                ForumId = comment.ForumId,
-                UserId = comment.UserId,
-                Username = comment.Username,
-                Content = comment.Content,
-                Timestamp = GetTimestampString(comment.CreatedAt),
-                Replies = comment.Replies.Select(reply => new ReplyDto
+                .OrderBy(c => c.CreatedAt)
+                .Select(comment => new CommentDto
                 {
-                    Id = reply.Id,
-                    CommentId = reply.CommentId,
-                    UserId = reply.UserId,
-                    Username = reply.Username,
-                    Content = reply.Content,
-                    Timestamp = GetTimestampString(reply.CreatedAt)
-                }).ToList()
-            }).ToList();
+                    Id = comment.Id,
+                    ForumId = comment.ForumId,
+                    UserId = comment.UserId,
+                    Username = comment.Username,
+                    Content = comment.Content,
+                    Timestamp = GetTimestampString(comment.CreatedAt),
+                    Replies = comment.Replies.OrderBy(r => r.CreatedAt).Select(reply => new ReplyDto
+                    {
+                        Id = reply.Id,
+                        CommentId = reply.CommentId,
+                        UserId = reply.UserId,
+                        Username = reply.Username,
+                        Content = reply.Content,
+                        Timestamp = GetTimestampString(reply.CreatedAt)
+                    }).ToList()
+                }).ToListAsync();
 
-            return Ok(commentDtos);
+            return Ok(comments);
         }
 
-        // POST: api/comment/forum/{forumId}
-        [HttpPost("forum/{forumId}")]
-        public async Task<IActionResult> AddComment(Guid forumId, [FromBody] AddCommentRequestDto requestDto, [FromQuery] string userId = "CurrentUser")
+        [HttpPost("forums/{forumId}/comments")]
+        [Authorize]
+        public async Task<IActionResult> AddComment(Guid forumId, [FromBody] AddCommentRequestDto requestDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var (userId, username) = GetCurrentUser();
+            if (userId == 0) return Unauthorized();
 
             var forum = await dbContext.Forums.FindAsync(forumId);
-            if (forum == null)
-            {
-                return NotFound("Forum not found");
-            }
+            if (forum == null) return NotFound("Forum not found");
 
             var comment = new Comment
             {
-                Id = Guid.NewGuid(),
                 ForumId = forumId,
                 UserId = userId,
-                Username = userId, // In a real app, get the actual username from user service
+                Username = username,
                 Content = requestDto.Content,
                 CreatedAt = DateTime.UtcNow
             };
 
             dbContext.Comments.Add(comment);
-
-            // Increment comment count on forum
             forum.CommentsCount++;
-
             await dbContext.SaveChangesAsync();
 
-            var commentDto = new CommentDto
+            return Ok(new CommentDto
             {
                 Id = comment.Id,
                 ForumId = comment.ForumId,
@@ -99,44 +87,33 @@ namespace CookbookApp.APi.Controllers
                 Content = comment.Content,
                 Timestamp = GetTimestampString(comment.CreatedAt),
                 Replies = new List<ReplyDto>()
-            };
-
-            return CreatedAtAction(nameof(GetComments), new { forumId }, commentDto);
+            });
         }
 
-        // POST: api/comment/{commentId}/reply
-        [HttpPost("{commentId}/reply")]
-        public async Task<IActionResult> AddReply(Guid commentId, [FromBody] AddReplyRequestDto requestDto, [FromQuery] string userId = "CurrentUser")
+        [HttpPost("comments/{commentId}/replies")]
+        [Authorize]
+        public async Task<IActionResult> AddReply(Guid commentId, [FromBody] AddReplyRequestDto requestDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var (userId, username) = GetCurrentUser();
+            if (userId == 0) return Unauthorized();
 
             var comment = await dbContext.Comments.Include(c => c.Forum).FirstOrDefaultAsync(c => c.Id == commentId);
-            if (comment == null)
-            {
-                return NotFound("Comment not found");
-            }
+            if (comment == null) return NotFound("Comment not found");
 
             var reply = new Reply
             {
-                Id = Guid.NewGuid(),
                 CommentId = commentId,
                 UserId = userId,
-                Username = userId, // In a real app, get the actual username from user service
+                Username = username,
                 Content = requestDto.Content,
                 CreatedAt = DateTime.UtcNow
             };
 
             dbContext.Replies.Add(reply);
-
-            // Increment comment count on forum (replies count as comments too)
             comment.Forum.CommentsCount++;
-
             await dbContext.SaveChangesAsync();
 
-            var replyDto = new ReplyDto
+            return Ok(new ReplyDto
             {
                 Id = reply.Id,
                 CommentId = reply.CommentId,
@@ -144,53 +121,44 @@ namespace CookbookApp.APi.Controllers
                 Username = reply.Username,
                 Content = reply.Content,
                 Timestamp = GetTimestampString(reply.CreatedAt)
-            };
-
-            return CreatedAtAction(nameof(GetComments), new { forumId = comment.ForumId }, replyDto);
+            });
         }
 
-        // DELETE: api/comment/{id}
-        [HttpDelete("{id}")]
+        [HttpDelete("comments/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteComment(Guid id)
         {
+            var (userId, _) = GetCurrentUser();
             var comment = await dbContext.Comments
                 .Include(c => c.Replies)
                 .Include(c => c.Forum)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
-            if (comment == null)
-            {
-                return NotFound();
-            }
+            if (comment == null) return NotFound();
+            if (comment.UserId != userId) return Forbid();
 
-            // Calculate how many items we're removing (comment + all replies)
             int itemsToRemove = 1 + comment.Replies.Count;
+            comment.Forum.CommentsCount = Math.Max(0, comment.Forum.CommentsCount - itemsToRemove);
 
-            // Update forum comment count
-            comment.Forum.CommentsCount -= itemsToRemove;
-
-            dbContext.Comments.Remove(comment);
+            dbContext.Comments.Remove(comment); // Cascade will delete replies
             await dbContext.SaveChangesAsync();
 
             return NoContent();
         }
 
-        // DELETE: api/comment/reply/{id}
-        [HttpDelete("reply/{id}")]
+        [HttpDelete("replies/{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteReply(Guid id)
         {
+            var (userId, _) = GetCurrentUser();
             var reply = await dbContext.Replies
-                .Include(r => r.Comment)
-                .ThenInclude(c => c.Forum)
+                .Include(r => r.Comment.Forum)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
-            if (reply == null)
-            {
-                return NotFound();
-            }
+            if (reply == null) return NotFound();
+            if (reply.UserId != userId) return Forbid();
 
-            // Update forum comment count
-            reply.Comment.Forum.CommentsCount--;
+            reply.Comment.Forum.CommentsCount = Math.Max(0, reply.Comment.Forum.CommentsCount - 1);
 
             dbContext.Replies.Remove(reply);
             await dbContext.SaveChangesAsync();
@@ -198,30 +166,14 @@ namespace CookbookApp.APi.Controllers
             return NoContent();
         }
 
-        // Helper method to format timestamp
         private string GetTimestampString(DateTime createdAt)
         {
             var timeSpan = DateTime.UtcNow - createdAt;
-
-            if (timeSpan.TotalSeconds < 60)
-            {
-                return "Just now";
-            }
-            if (timeSpan.TotalMinutes < 60)
-            {
-                return $"{(int)timeSpan.TotalMinutes} minutes ago";
-            }
-            if (timeSpan.TotalHours < 24)
-            {
-                return $"{(int)timeSpan.TotalHours} hours ago";
-            }
-            if (timeSpan.TotalDays < 7)
-            {
-                return $"{(int)timeSpan.TotalDays} days ago";
-            }
-
+            if (timeSpan.TotalSeconds < 60) return "Just now";
+            if (timeSpan.TotalMinutes < 60) return $"{(int)timeSpan.TotalMinutes}m ago";
+            if (timeSpan.TotalHours < 24) return $"{(int)timeSpan.TotalHours}h ago";
+            if (timeSpan.TotalDays < 7) return $"{(int)timeSpan.TotalDays}d ago";
             return createdAt.ToString("MMM dd, yyyy");
         }
     }
 }
-    

@@ -1,20 +1,28 @@
+// src/Models/Domain/ForumVote.cs
+
 using CookbookAppBackend.Models;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace CookbookApp.APi.Models.Domain
 {
-    public class Comment
+    public class ForumVote
     {
         public Guid Id { get; set; }
+
+        [Required]
         public Guid ForumId { get; set; }
+
+        [Required]
         public int UserId { get; set; }
-        public string Username { get; set; }
-        public string Content { get; set; }
-        public DateTime CreatedAt { get; set; }
+
+        /// <summary>
+        /// 1 for Upvote, -1 for Downvote
+        /// </summary>
+        [Required]
+        public int VoteType { get; set; }
 
         // Navigation properties
         public Forum Forum { get; set; }
         public User User { get; set; }
-        public ICollection<Reply> Replies { get; set; } = new List<Reply>();
     }
 }

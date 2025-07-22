@@ -1,4 +1,4 @@
-using System;
+using CookbookAppBackend.Models;
 using System.Collections.Generic;
 
 namespace CookbookApp.APi.Models.Domain
@@ -14,11 +14,15 @@ namespace CookbookApp.APi.Models.Domain
         public int ViewsCount { get; set; }
         public int UpvotesCount { get; set; }
         public int DownvotesCount { get; set; }
-        public string AuthorId { get; set; }
         public string Category { get; set; }
 
+        // Foreign Key to User
+        public int AuthorId { get; set; }
+
         // Navigation properties
+        public User Author { get; set; }
         public ICollection<Comment> Comments { get; set; } = new List<Comment>();
         public ICollection<UserFavorite> UserFavorites { get; set; } = new List<UserFavorite>();
+        public ICollection<ForumVote> Votes { get; set; } = new List<ForumVote>();
     }
 }

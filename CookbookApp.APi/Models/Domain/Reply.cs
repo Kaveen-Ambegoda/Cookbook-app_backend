@@ -1,4 +1,4 @@
-using System;
+using CookbookAppBackend.Models;
 
 namespace CookbookApp.APi.Models.Domain
 {
@@ -6,12 +6,13 @@ namespace CookbookApp.APi.Models.Domain
     {
         public Guid Id { get; set; }
         public Guid CommentId { get; set; }
-        public string UserId { get; set; }
+        public int UserId { get; set; }
         public string Username { get; set; }
         public string Content { get; set; }
         public DateTime CreatedAt { get; set; }
 
-        // Navigation property
+        // Navigation properties
         public Comment Comment { get; set; }
+        public User User { get; set; }
     }
 }

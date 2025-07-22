@@ -7,7 +7,7 @@ namespace CookbookApp.APi.Models.DTO
         public Guid Id { get; set; }
         public string Title { get; set; }
         public string Image { get; set; }
-        public string Url { get; set; }
+        public string? Url { get; set; }
         public string Timestamp { get; set; }
         public int Comments { get; set; }
         public int Views { get; set; }
@@ -16,5 +16,9 @@ namespace CookbookApp.APi.Models.DTO
         public string Author { get; set; }
         public string Category { get; set; }
         public bool IsFavorite { get; set; }
+
+        // --- ADD THESE TWO PROPERTIES ---
+        public int UserId { get; set; }
+        public string? UserVote { get; set; } // "upvote", "downvote", or null
     }
 }
