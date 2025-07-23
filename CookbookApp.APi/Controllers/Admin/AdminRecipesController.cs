@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using CookbookApp.APi.Data;
 using CookbookApp.APi.Models.Domain;
 using CookbookApp.APi.Models.DTO.Admin.Recipe;
+
 namespace CookbookApp.APi.Controllers.Admin
 {
     [ApiController]
@@ -16,40 +17,232 @@ namespace CookbookApp.APi.Controllers.Admin
             _context = context;
         }
 
-        // ✅ GET: api/admin/recipes
+        // GET: api/admin/adminrecipes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetRecipeDto>>> GetAllRecipes()
         {
-            var recipes = await _context.Recipes.ToListAsync();
-
-            var result = recipes.Select(r => new GetRecipeDto
+            try
             {
-                Id = r.Id,
-                Title = r.Title,
-                Category = r.Category,
-                CookingTime = r.CookingTime,
-                Portion = r.Portion,
-                Calories = r.Calories,
-                Carbs = r.Carbs,
-                Protein = r.Protein,
-                Fat = r.Fat,
-                Ingredients = r.Ingredients,
-                Instructions = r.Instructions,
-                Image = r.Image
-            }).ToList();
+                var recipes = await _context.Recipes
+                    .Include(r => r.User) // Include User for Author mapping
+                    .ToListAsync();
 
-            return Ok(result);
+                var result = recipes.Select(r => MapToGetRecipeDto(r)).ToList();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving recipes: {ex.Message}");
+            }
         }
 
-        // ✅ GET: api/admin/recipes/5
+        // GET: api/admin/adminrecipes/5
         [HttpGet("{id}")]
         public async Task<ActionResult<GetRecipeDto>> GetRecipeById(int id)
         {
-            var recipe = await _context.Recipes.FindAsync(id);
-            if (recipe == null)
-                return NotFound();
+            try
+            {
+                var recipe = await _context.Recipes
+                    .Include(r => r.User)
+                    .FirstOrDefaultAsync(r => r.Id == id);
 
-            var dto = new GetRecipeDto
+                if (recipe == null)
+                    return NotFound($"Recipe with ID {id} not found.");
+
+                var dto = MapToGetRecipeDto(recipe);
+                return Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving recipe: {ex.Message}");
+            }
+        }
+
+        // POST: api/admin/adminrecipes
+        [HttpPost]
+        public async Task<ActionResult<GetRecipeDto>> CreateRecipe([FromBody] RecipeDto recipeDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var recipe = MapFromRecipeDto(recipeDto);
+
+                _context.Recipes.Add(recipe);
+                await _context.SaveChangesAsync();
+
+                // Return the created recipe as GetRecipeDto
+                var createdRecipe = await _context.Recipes
+                    .Include(r => r.User)
+                    .FirstOrDefaultAsync(r => r.Id == recipe.Id);
+
+                var resultDto = MapToGetRecipeDto(createdRecipe);
+                return CreatedAtAction(nameof(GetRecipeById), new { id = recipe.Id }, resultDto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error creating recipe: {ex.Message}");
+            }
+        }
+
+        // PUT: api/admin/adminrecipes/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateRecipe(int id, [FromBody] RecipeDto recipeDto)
+        {
+            if (id != recipeDto.Id)
+                return BadRequest("Recipe ID mismatch");
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var recipe = await _context.Recipes.FindAsync(id);
+                if (recipe == null)
+                    return NotFound($"Recipe with ID {id} not found.");
+
+                UpdateRecipeFromDto(recipe, recipeDto);
+
+                _context.Recipes.Update(recipe);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error updating recipe: {ex.Message}");
+            }
+        }
+
+        // PUT: api/admin/adminrecipes/5/toggle-visibility
+        [HttpPut("{id}/toggle-visibility")]
+        public async Task<IActionResult> ToggleVisibility(int id, [FromBody] ToggleVisibilityDto? toggleDto = null)
+        {
+            try
+            {
+                var recipe = await _context.Recipes.FindAsync(id);
+                if (recipe == null)
+                    return NotFound($"Recipe with ID {id} not found.");
+
+                // Use provided value or toggle current value
+                if (toggleDto != null)
+                {
+                    SetPropertyValue(recipe, "Visible", toggleDto.Visible);
+                }
+                else
+                {
+                    // Toggle current visibility
+                    var currentVisibility = GetPropertyValue<bool>(recipe, "Visible", true);
+                    SetPropertyValue(recipe, "Visible", !currentVisibility);
+                }
+
+                _context.Recipes.Update(recipe);
+                await _context.SaveChangesAsync();
+
+                var newVisibility = GetPropertyValue<bool>(recipe, "Visible", true);
+                return Ok(new { visible = newVisibility });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error toggling visibility: {ex.Message}");
+            }
+        }
+
+        // PUT: api/admin/adminrecipes/5/visibility
+        [HttpPut("{id}/visibility")]
+        public async Task<IActionResult> SetVisibility(int id, [FromBody] ToggleVisibilityDto visibilityDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var recipe = await _context.Recipes.FindAsync(id);
+                if (recipe == null)
+                    return NotFound($"Recipe with ID {id} not found.");
+
+                SetPropertyValue(recipe, "Visible", visibilityDto.Visible);
+
+                _context.Recipes.Update(recipe);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { visible = visibilityDto.Visible });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error setting visibility: {ex.Message}");
+            }
+        }
+
+        // DELETE: api/admin/adminrecipes/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteRecipe(int id)
+        {
+            try
+            {
+                var recipe = await _context.Recipes.FindAsync(id);
+                if (recipe == null)
+                    return NotFound($"Recipe with ID {id} not found.");
+
+                _context.Recipes.Remove(recipe);
+                await _context.SaveChangesAsync();
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error deleting recipe: {ex.Message}");
+            }
+        }
+
+        // GET: api/admin/adminrecipes/visible
+        [HttpGet("visible")]
+        public async Task<ActionResult<IEnumerable<GetRecipeDto>>> GetVisibleRecipes()
+        {
+            try
+            {
+                var recipes = await _context.Recipes
+                    .Include(r => r.User)
+                    .ToListAsync();
+
+                // Filter visible recipes (handle both cases: property exists or doesn't)
+                var visibleRecipes = recipes.Where(r => GetPropertyValue<bool>(r, "Visible", true)).ToList();
+                var result = visibleRecipes.Select(r => MapToGetRecipeDto(r)).ToList();
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving visible recipes: {ex.Message}");
+            }
+        }
+
+        // GET: api/admin/adminrecipes/category/{category}
+        [HttpGet("category/{category}")]
+        public async Task<ActionResult<IEnumerable<GetRecipeDto>>> GetRecipesByCategory(string category)
+        {
+            try
+            {
+                var recipes = await _context.Recipes
+                    .Include(r => r.User)
+                    .Where(r => r.Category.ToLower() == category.ToLower())
+                    .ToListAsync();
+
+                var result = recipes.Select(r => MapToGetRecipeDto(r)).ToList();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving recipes by category: {ex.Message}");
+            }
+        }
+
+        #region Private Helper Methods
+
+        private GetRecipeDto MapToGetRecipeDto(Recipe recipe)
+        {
+            return new GetRecipeDto
             {
                 Id = recipe.Id,
                 Title = recipe.Title,
@@ -62,77 +255,116 @@ namespace CookbookApp.APi.Controllers.Admin
                 Fat = recipe.Fat,
                 Ingredients = recipe.Ingredients,
                 Instructions = recipe.Instructions,
-                Image = recipe.Image
-            };
+                Image = recipe.Image,
+                UserID = recipe.UserID,
 
-            return Ok(dto);
+                // Handle additional properties with fallbacks
+                Author = GetAuthorName(recipe),
+                Description = GetPropertyValue<string>(recipe, "Description", "") ??
+                           GenerateDescriptionFromInstructions(recipe.Instructions),
+                Visible = GetPropertyValue<bool>(recipe, "Visible", true)
+            };
         }
 
-        // ✅ POST: api/admin/recipes
-        [HttpPost]
-        public async Task<ActionResult> CreateRecipe([FromBody] RecipeDto recipeDto)
+        private Recipe MapFromRecipeDto(RecipeDto dto)
         {
             var recipe = new Recipe
             {
-                Title = recipeDto.Title,
-                Category = recipeDto.Category,
-                CookingTime = recipeDto.CookingTime,
-                Portion = recipeDto.Portion,
-                Calories = recipeDto.Calories,
-                Carbs = recipeDto.Carbs,
-                Protein = recipeDto.Protein,
-                Fat = recipeDto.Fat,
-                Ingredients = recipeDto.Ingredients,
-                Instructions = recipeDto.Instructions,
-                Image = recipeDto.Image,
-                UserID = recipeDto.UserID // assume admin knows which user owns the recipe
+                Title = dto.Title,
+                Category = dto.Category,
+                CookingTime = dto.CookingTime,
+                Portion = dto.Portion,
+                Calories = dto.Calories,
+                Carbs = dto.Carbs,
+                Protein = dto.Protein,
+                Fat = dto.Fat,
+                Ingredients = dto.Ingredients,
+                Instructions = dto.Instructions,
+                Image = dto.Image,
+                UserID = dto.UserID
             };
 
-            _context.Recipes.Add(recipe);
-            await _context.SaveChangesAsync();
+            // Set additional properties if they exist
+            SetPropertyValue(recipe, "Description", dto.Description);
+            SetPropertyValue(recipe, "Visible", dto.Visible);
 
-            return CreatedAtAction(nameof(GetRecipeById), new { id = recipe.Id }, recipe);
+            return recipe;
         }
 
-        // ✅ PUT: api/admin/recipes/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateRecipe(int id, [FromBody] RecipeDto recipeDto)
+        private void UpdateRecipeFromDto(Recipe recipe, RecipeDto dto)
         {
-            var recipe = await _context.Recipes.FindAsync(id);
-            if (recipe == null)
-                return NotFound();
+            recipe.Title = dto.Title;
+            recipe.Category = dto.Category;
+            recipe.CookingTime = dto.CookingTime;
+            recipe.Portion = dto.Portion;
+            recipe.Calories = dto.Calories;
+            recipe.Carbs = dto.Carbs;
+            recipe.Protein = dto.Protein;
+            recipe.Fat = dto.Fat;
+            recipe.Ingredients = dto.Ingredients;
+            recipe.Instructions = dto.Instructions;
+            recipe.Image = dto.Image;
+            recipe.UserID = dto.UserID;
 
-            recipe.Title = recipeDto.Title;
-            recipe.Category = recipeDto.Category;
-            recipe.CookingTime = recipeDto.CookingTime;
-            recipe.Portion = recipeDto.Portion;
-            recipe.Calories = recipeDto.Calories;
-            recipe.Carbs = recipeDto.Carbs;
-            recipe.Protein = recipeDto.Protein;
-            recipe.Fat = recipeDto.Fat;
-            recipe.Ingredients = recipeDto.Ingredients;
-            recipe.Instructions = recipeDto.Instructions;
-            recipe.Image = recipeDto.Image;
-            recipe.UserID = recipeDto.UserID;
-
-            _context.Recipes.Update(recipe);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            // Update additional properties if they exist
+            SetPropertyValue(recipe, "Description", dto.Description);
+            SetPropertyValue(recipe, "Visible", dto.Visible);
         }
 
-        // ✅ DELETE: api/admin/recipes/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteRecipe(int id)
+        private string GetAuthorName(Recipe recipe)
         {
-            var recipe = await _context.Recipes.FindAsync(id);
-            if (recipe == null)
-                return NotFound();
-
-            _context.Recipes.Remove(recipe);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            if (recipe.User != null)
+            {
+                return !string.IsNullOrEmpty(recipe.User.Username) ? recipe.User.Username :
+                       GetPropertyValue<string>(recipe.User, "Username", "") ??
+                       $"User {recipe.UserID}";
+            }
+            return $"User {recipe.UserID}";
         }
+
+        private string GenerateDescriptionFromInstructions(string instructions)
+        {
+            if (string.IsNullOrEmpty(instructions))
+                return "";
+
+            const int maxLength = 100;
+            if (instructions.Length <= maxLength)
+                return instructions;
+
+            var truncated = instructions.Substring(0, maxLength);
+            var lastSpace = truncated.LastIndexOf(' ');
+
+            return lastSpace > 0 ? truncated.Substring(0, lastSpace) + "..." : truncated + "...";
+        }
+
+        private bool HasProperty(object obj, string propertyName)
+        {
+            return obj.GetType().GetProperty(propertyName) != null;
+        }
+
+        private T GetPropertyValue<T>(object obj, string propertyName, T defaultValue = default(T))
+        {
+            var property = obj.GetType().GetProperty(propertyName);
+            if (property != null && property.CanRead)
+            {
+                var value = property.GetValue(obj);
+                if (value is T)
+                    return (T)value;
+                if (value != null && typeof(T).IsAssignableFrom(value.GetType()))
+                    return (T)value;
+            }
+            return defaultValue;
+        }
+
+        private void SetPropertyValue<T>(object obj, string propertyName, T value)
+        {
+            var property = obj.GetType().GetProperty(propertyName);
+            if (property != null && property.CanWrite && property.PropertyType.IsAssignableFrom(typeof(T)))
+            {
+                property.SetValue(obj, value);
+            }
+        }
+
+        #endregion
     }
 }

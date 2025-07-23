@@ -14,6 +14,13 @@
         public double Fat { get; set; }
         public double Carbs { get; set; }
         public string Image { get; set; }
+        public int UserID { get; set; }
+        public string Description { get; set; } = "";
+        public bool Visible { get; set; } = true;
 
+        // Frontend compatibility properties
+        public string Name => Title; // Keep this mapping
+        public string Author { get; set; } // Will be populated from User.Name
+        public int User => 1; // Keep for frontend compatibility
     }
 }

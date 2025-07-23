@@ -15,6 +15,13 @@
         public double Carbs { get; set; }
         public string Image { get; set; }
         public int UserID { get; set; }
+        public string Description { get; set; } = "";
+        public bool Visible { get; set; } = true;
+    }
 
+    // Create a separate DTO for visibility toggle operations
+    public class ToggleVisibilityDto
+    {
+        public bool Visible { get; set; }
     }
 }

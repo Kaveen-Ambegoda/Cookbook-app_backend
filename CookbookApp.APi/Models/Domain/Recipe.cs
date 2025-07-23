@@ -22,6 +22,8 @@ namespace CookbookApp.APi.Models.Domain
         public int UserID { get; set; }
 
         public User User {get; set; }
+        public string Description { get; set; } = "";
+        public bool Visible { get; set; } = true;
 
     }
 }
