@@ -87,19 +87,6 @@ namespace CookbookApp.APi.Controllers
         }
 
 
-        //count Favorite Recipe
-
-        [AllowAnonymous]
-        [HttpGet("count/{recipeId}")]
-        public async Task<IActionResult> GetFavoriteCount(int recipeId)
-        {
-            var count = await _context.FavoriteRecipes
-                .Where(f => f.RecipeId == recipeId)
-                .CountAsync();
-
-            return Ok(count);
-        }
-
         //IsFavorite list
         [Authorize]
         [HttpGet("is-favorited/{recipeId}")]
@@ -112,6 +99,39 @@ namespace CookbookApp.APi.Controllers
 
             return Ok(isFav);
         }
+
+
+        [Authorize]
+        [HttpPost("toggle")]
+        public async Task<IActionResult> ToggleFavorite([FromBody] int recipeId)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            var existing = await _context.FavoriteRecipes
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.RecipeId == recipeId);
+
+            if (existing != null)
+            {
+                _context.FavoriteRecipes.Remove(existing);
+                await _context.SaveChangesAsync();
+                return Ok(new { isFavorited = false, message = "Removed from favorites" });
+            }
+
+            var recipe = await _context.Recipes.FindAsync(recipeId);
+            if (recipe == null)
+                return NotFound("Recipe not found.");
+
+            _context.FavoriteRecipes.Add(new FavoriteRecipe
+            {
+                UserId = userId,
+                RecipeId = recipeId
+            });
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { isFavorited = true, message = "Added to favorites" });
+        }
+
 
     }
 }
