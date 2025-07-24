@@ -59,8 +59,8 @@ namespace CookbookApp.APi.Controllers
                     f.Recipe.Title,
                     f.Recipe.Image,
                     f.Recipe.CookingTime,
-                    f.Recipe.Portion,  
-                    
+                    f.Recipe.Portion,
+
                 })
                 .ToListAsync();
 
