@@ -53,6 +53,8 @@ namespace CookbookApp.APi.Data
                 .HasForeignKey(fr => fr.UserId)
                 .OnDelete(DeleteBehavior.Restrict); // 👈 This is the key to fix the migration error
         }
+        public DbSet<ChallengeDetail> ChallengeDetails { get; set; }
+
 
     }
 }

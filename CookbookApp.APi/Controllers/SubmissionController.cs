@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using CookbookAppBackend.Models; 
+
 
 namespace CookbookApp.APi.Controllers
 {
@@ -15,6 +17,7 @@ namespace CookbookApp.APi.Controllers
     public class SubmissionController : ControllerBase
     {
         private readonly CookbookDbContext dbContext;
+        
         private readonly IWebHostEnvironment webHostEnvironment;
         private readonly Cloudinary _cloudinary;
 
@@ -65,7 +68,6 @@ namespace CookbookApp.APi.Controllers
                 FullName = dto.UserFullName,
                 RecipeName = dto.RecipeName,
                 RecipeDescription = dto.RecipeDescription,
-                ChallengeId = dto.ChallengeId,
                 ChallengeName = dto.ChallengeName,
                 ChallengeCategory = dto.ChallengeCategory,
                 Ingredients = System.Text.Json.JsonSerializer.Serialize(dto.Ingredients),
@@ -83,24 +85,10 @@ namespace CookbookApp.APi.Controllers
             return Ok(new { success = true, message = "Submission created.", submissionId = submission.Id });
         }
 
-        // GET: api/submission/voteAndRate
+     // GET: api/submission/voteAndRate   
         
 
-        // GET: api/submission/image/{filename}
-        [HttpGet("image/{filename}")]
-        public IActionResult GetImage(string filename)
-        {
-            var imagePath = Path.Combine(webHostEnvironment.WebRootPath, "submission-images", filename);
-            
-            if (!System.IO.File.Exists(imagePath))
-            {
-                return NotFound();
-            }
-
-            var image = System.IO.File.OpenRead(imagePath);
-            return File(image, "image/jpeg");
-        }
-
+        
         
         // POST: api/submission/approve/{id}
         [HttpPost("approve/{id}")]
@@ -119,6 +107,34 @@ namespace CookbookApp.APi.Controllers
 
             return Ok(new { success = true, message = "Submission approved manually for testing." });
         }
+
+        [HttpGet("challenge/{challengeId}")]
+        public async Task<IActionResult> GetSubmissionsByChallengeId(string challengeId)
+        {
+            var submissions = await dbContext.Submissions
+                .Where(s => s.ChallengeName == challengeId)
+                .Include(s => s.User) // to access FullName
+                .ToListAsync(); // Ensure the query is executed asynchronously
+
+            var result = submissions.Select(s => new
+            {
+                SubmissionId = s.Id,
+                FullName = s.User?.Username, // Use Username instead of FullName
+                RecipeName = s.RecipeName,
+                Ingredients = JsonSerializer.Deserialize<List<string>>(s.Ingredients),
+                RecipeDescription = s.RecipeDescription,
+                RecipeImage = s.RecipeImage,
+                ChallengeCategory = s.ChallengeCategory, // Use ChallengeCategory directly from Submission
+                Votes = s.Votes,
+                Rating = s.Rating,
+                TotalRatings = s.TotalRatings
+            }).ToList();
+
+            return Ok(result);
+        }
+
+
+
     }
 
     // You need a DTO for model binding:

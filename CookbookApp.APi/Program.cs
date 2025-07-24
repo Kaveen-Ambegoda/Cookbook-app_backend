@@ -32,7 +32,7 @@ builder.Services.AddSingleton(x =>
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAll", policy =>
     {
         policy
             .WithOrigins("http://localhost:8080", "https://localhost:8080") // your frontend domain
@@ -74,7 +74,7 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Middleware
-app.UseCors("AllowFrontend");
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthentication();

@@ -1,56 +1,30 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CookbookApp.APi.Models.Domain;
+using CookbookAppBackend.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CookbookApp.APi.Models.Domain
+public class Submission
 {
-    public class Submission
-    {
-        public Guid Id { get; set; }
-        
-        [Required]
-        public string FullName { get; set; }
-        
-        [Required]
-        public string RecipeName { get; set; }
-        
-        [Required]
-        public string Ingredients { get; set; } // JSON string of ingredients array
-        
-        [Required]
-        public string RecipeDescription { get; set; }
-        
-        public string? RecipeImage { get; set; }
-        
-        [Required]
-        public string ChallengeId { get; set; }
-        
-        [Required]
-        public string ChallengeName { get; set; }
-        
-        [Required]
-        public string ChallengeCategory { get; set; }
-        
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        
-        public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
-        public bool IsApproved { get; set; } = false;
-        public string? ApprovedBy { get; set; }
-        public DateTime? ApprovedAt { get; set; }
-        
-        // Navigation properties
-        public ICollection<Vote> Votes { get; set; } = new List<Vote>();
-        public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
-        
-        // Computed properties
-        public int VotesCount => Votes?.Count ?? 0;
-        public double AverageRating => Ratings?.Any() == true ? Ratings.Average(r => r.Stars) : 0;
+    public Guid Id { get; set; }
+    public string FullName { get; set; }
+    public string RecipeName { get; set; }
+    public string RecipeDescription { get; set; }
+    public string Ingredients { get; set; }
+    public string RecipeImage { get; set; }
+    public string ChallengeName { get; set; }
+    public string ChallengeCategory { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string Status { get; set; }
+    public bool IsApproved { get; set; }
+    public int UserId { get; set; }
+    public string UserEmail { get; set; }
 
-        // Add these properties:
-        [Required]
-        public int UserId { get; set; } // Foreign key to User
+    public DateTime? ApprovedAt { get; set; }
+    public string? ApprovedBy { get; set; }
 
-        // If you want to store Email directly (not recommended, but possible):
-        public string UserEmail { get; set; }
-    }
-    
+    public int Votes { get; set; }
+    public double Rating { get; set; }
+    public int TotalRatings { get; set; }
+
+    // Navigation properties
+    public User? User { get; set; }
 }
