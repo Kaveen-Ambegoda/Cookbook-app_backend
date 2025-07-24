@@ -68,6 +68,7 @@ namespace CookbookApp.APi.Controllers
                 FullName = dto.UserFullName,
                 RecipeName = dto.RecipeName,
                 RecipeDescription = dto.RecipeDescription,
+                ChallengeId = dto.ChallengeId, // <-- Add this line
                 ChallengeName = dto.ChallengeName,
                 ChallengeCategory = dto.ChallengeCategory,
                 Ingredients = System.Text.Json.JsonSerializer.Serialize(dto.Ingredients),
@@ -112,19 +113,19 @@ namespace CookbookApp.APi.Controllers
         public async Task<IActionResult> GetSubmissionsByChallengeId(string challengeId)
         {
             var submissions = await dbContext.Submissions
-                .Where(s => s.ChallengeName == challengeId)
-                .Include(s => s.User) // to access FullName
-                .ToListAsync(); // Ensure the query is executed asynchronously
+                .Where(s => s.ChallengeId == challengeId) // <-- Use ChallengeId
+                .Include(s => s.User)
+                .ToListAsync();
 
             var result = submissions.Select(s => new
             {
                 SubmissionId = s.Id,
-                FullName = s.User?.Username, // Use Username instead of FullName
+                FullName = s.FullName, // Use FullName from Submission
                 RecipeName = s.RecipeName,
                 Ingredients = JsonSerializer.Deserialize<List<string>>(s.Ingredients),
                 RecipeDescription = s.RecipeDescription,
                 RecipeImage = s.RecipeImage,
-                ChallengeCategory = s.ChallengeCategory, // Use ChallengeCategory directly from Submission
+                ChallengeCategory = s.ChallengeCategory,
                 Votes = s.Votes,
                 Rating = s.Rating,
                 TotalRatings = s.TotalRatings

@@ -24,6 +24,7 @@ public class Submission
     public int Votes { get; set; }
     public double Rating { get; set; }
     public int TotalRatings { get; set; }
+    public string ChallengeId { get; set; }
 
     // Navigation properties
     public User? User { get; set; }
