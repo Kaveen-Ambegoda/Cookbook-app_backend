@@ -32,15 +32,15 @@ namespace CookbookAppBackend.Controllers
         public IActionResult Login([FromBody] LoginModel login)
         {
             var user = _context.Users.SingleOrDefault(x => x.Email == login.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(login.Password, user.PasswordHash))
-            {
+            if (user == null)
                 return Unauthorized();
-            }
+
+            if (!BCrypt.Net.BCrypt.Verify(login.Password, user.PasswordHash))
+                return Unauthorized();
 
             if (!user.IsEmailConfirmed)
-            {
-                return Unauthorized();
-            }
+                return Unauthorized("Please verify your email before logging in.");
+
 
             var claims = new[]
             {
@@ -97,8 +97,8 @@ namespace CookbookAppBackend.Controllers
                 };
 
                 _context.Users.Add(user);
-                _context.SaveChanges();
-
+                await _context.SaveChangesAsync();
+                await Task.Delay(500);
                 await SendVerificationEmailAsync(user.Email, token);
 
                 return Ok(new { Message = "User registered successfully" });
@@ -221,7 +221,7 @@ namespace CookbookAppBackend.Controllers
 
 
         [HttpPost("verify-email")]
-        public IActionResult VerifyEmail([FromQuery] string token)
+        public async Task<IActionResult> VerifyEmail([FromQuery] string token)
         {
             if (string.IsNullOrEmpty(token))
                 return BadRequest("Token is required");
@@ -238,7 +238,7 @@ namespace CookbookAppBackend.Controllers
             user.EmailVerificationToken = null;
             user.EmailVerificationTokenExpiryTime = null;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return Ok(new { message = "Email verified successfully!" });
         }
