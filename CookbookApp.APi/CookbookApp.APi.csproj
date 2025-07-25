@@ -11,6 +11,7 @@
 	<ItemGroup>
 		<!-- For password hashing -->
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+		<PackageReference Include="MailKit" Version="4.13.0" />
 
 		<!-- For JWT authentication -->
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.15" />
@@ -29,6 +30,7 @@
 
 		<!-- Cloudinary for image uploads -->
 		<PackageReference Include="CloudinaryDotNet" Version="1.27.5" />
+		<PackageReference Include="SendGrid" Version="9.29.3" />
 
 		<!-- Swagger for API testing -->
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />

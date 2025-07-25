@@ -64,6 +64,14 @@ namespace CookbookAppBackend.Models
         // Navigation property for restrictions
         public UserRestrictions? Restrictions { get; set; }
 
+        public bool IsEmailConfirmed { get; set; }
+
+        public string? EmailVerificationToken { get; set; }
+
+        public DateTime? EmailVerificationTokenExpiryTime { get; set; }
+        public string PasswordHash { get; set; }
+        public string Role { get; set; }  // 'Admin', 'User'
+
         // JWT Related (keeping your existing properties)
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }

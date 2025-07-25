@@ -20,8 +20,11 @@ namespace CookbookApp.APi.Models.Domain
         public double Carbs { get; set; }
         public string Image { get; set; }
 
+        // This links each recipe to a user (owner)
         public int UserID { get; set; }
+        public User User { get; set; }
 
+        public ICollection<Review> Reviews { get; set; } = new List<Review>(); // navigation property
         [ForeignKey("UserID")]
         public User User { get; set; }
 
