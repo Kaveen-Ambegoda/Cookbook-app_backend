@@ -5,17 +5,17 @@
 namespace CookbookApp.APi.Migrations
 {
     /// <inheritdoc />
-    public partial class UserID : Migration
+    public partial class AddUserIdAndUserEmail : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
+            migrationBuilder.AddColumn<int>(
                 name: "UserId",
-                table: "Recipes",
-                type: "nvarchar(max)",
+                table: "Submissions",
+                type: "int",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: 0);
         }
 
         /// <inheritdoc />
@@ -23,7 +23,7 @@ namespace CookbookApp.APi.Migrations
         {
             migrationBuilder.DropColumn(
                 name: "UserId",
-                table: "Recipes");
+                table: "Submissions");
         }
     }
 }

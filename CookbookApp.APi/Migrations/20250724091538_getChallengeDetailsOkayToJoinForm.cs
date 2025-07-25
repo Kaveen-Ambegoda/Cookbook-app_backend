@@ -5,7 +5,7 @@
 namespace CookbookApp.APi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddUserToRecipe : Migration
+    public partial class getChallengeDetailsOkayToJoinForm : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

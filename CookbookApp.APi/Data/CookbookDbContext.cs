@@ -1,7 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+
+
+
+
 using CookbookApp.APi.Models.Domain; // For Recipe
-using CookbookApp.APi.Models.Domain; // For Forum, Comment, Reply, UserFavorite
+// For Forum, Comment, Reply, UserFavorite
 using CookbookAppBackend.Models;     // For User
+
 
 namespace CookbookApp.APi.Data
 {
@@ -12,6 +17,12 @@ namespace CookbookApp.APi.Data
         
         public DbSet<User> Users { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
+
+        public DbSet<Challenge> Challenges { get; set; }
+        public DbSet<Submission> Submissions { get; set; }
+        public DbSet<Vote> Votes { get; set; }
+        public DbSet<Rating> Ratings { get; set; }
+
         public DbSet<Forum> Forums { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Reply> Replies { get; set; }
@@ -21,7 +32,7 @@ namespace CookbookApp.APi.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            
             // Recipe → User (with optional cascading if needed)
             modelBuilder.Entity<Recipe>()
                 .HasOne(r => r.User)
@@ -57,6 +68,8 @@ namespace CookbookApp.APi.Data
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
+        public DbSet<ChallengeDetail> ChallengeDetails { get; set; }
+
 
 
     }

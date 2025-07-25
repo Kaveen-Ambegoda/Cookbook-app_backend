@@ -5,7 +5,7 @@
 namespace CookbookApp.APi.Migrations
 {
     /// <inheritdoc />
-    public partial class MergeData1 : Migration
+    public partial class getChallengeDetailforSubmitForum : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
