@@ -11,6 +11,7 @@ namespace CookbookApp.APi.Data
 
         
         public DbSet<User> Users { get; set; }
+        public DbSet<UserRestrictions> UserRestrictions { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<Forum> Forums { get; set; }
         public DbSet<Comment> Comments { get; set; }
@@ -83,6 +84,53 @@ namespace CookbookApp.APi.Data
                     .WithMany()
                     .HasForeignKey(r => r.UserID);
             }
+            // Configure User entity
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Email).IsUnique();
+
+                entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.PasswordHash).IsRequired();
+                entity.Property(e => e.Role).HasMaxLength(20).HasDefaultValue("normal");
+                entity.Property(e => e.Status).HasMaxLength(20).HasDefaultValue("active");
+                entity.Property(e => e.RegisteredDate).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.LastActive).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.ReportCount).HasDefaultValue(0);
+                entity.Property(e => e.Reported).HasDefaultValue(false);
+                entity.Property(e => e.LiveVideos).HasDefaultValue(0);
+                entity.Property(e => e.Posts).HasDefaultValue(0);
+                entity.Property(e => e.Events).HasDefaultValue(0);
+                entity.Property(e => e.Followers).HasDefaultValue(0);
+                entity.Property(e => e.Likes).HasDefaultValue(0);
+                entity.Property(e => e.Comments).HasDefaultValue(0);
+                entity.Property(e => e.VideosWatched).HasDefaultValue(0);
+                entity.Property(e => e.EngagementScore).HasDefaultValue(0);
+
+                entity.Property(e => e.Avatar).HasMaxLength(500);
+                entity.Property(e => e.SubscriptionType).HasMaxLength(20);
+                entity.Property(e => e.ReportReason).HasMaxLength(500);
+            });
+
+            // Configure UserRestrictions entity
+            modelBuilder.Entity<UserRestrictions>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Commenting).HasDefaultValue(false);
+                entity.Property(e => e.Liking).HasDefaultValue(false);
+                entity.Property(e => e.Posting).HasDefaultValue(false);
+                entity.Property(e => e.Messaging).HasDefaultValue(false);
+                entity.Property(e => e.LiveStreaming).HasDefaultValue(false);
+
+                // Configure relationship
+                entity.HasOne(e => e.User)
+                      .WithOne(u => u.Restrictions)
+                      .HasForeignKey<UserRestrictions>(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
         }
         
     }

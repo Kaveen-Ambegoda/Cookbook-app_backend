@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using CookbookAppBackend.Models;
+using CookbookApp.APi.Models.Domain;
 namespace CookbookApp.APi.Models.Domain
 {
     public class Recipe
@@ -21,9 +22,15 @@ namespace CookbookApp.APi.Models.Domain
 
         public int UserID { get; set; }
 
-        public User User {get; set; }
-        public string Description { get; set; } = "";
-        public bool Visible { get; set; } = true;
+        [ForeignKey("UserID")]
+        public User User { get; set; }
 
+        [StringLength(500)]
+        public string Description { get; set; } = "";
+
+        public bool Visible { get; set; } = true;
     }
 }
+
+    
+

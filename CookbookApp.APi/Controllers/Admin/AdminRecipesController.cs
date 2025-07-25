@@ -24,7 +24,7 @@ namespace CookbookApp.APi.Controllers.Admin
             try
             {
                 var recipes = await _context.Recipes
-                    .Include(r => r.User) // Include User for Author mapping
+                    .Include(r => r.User)
                     .ToListAsync();
 
                 var result = recipes.Select(r => MapToGetRecipeDto(r)).ToList();
@@ -126,22 +126,20 @@ namespace CookbookApp.APi.Controllers.Admin
                     return NotFound($"Recipe with ID {id} not found.");
 
                 // Use provided value or toggle current value
-                if (toggleDto != null)
+                if (toggleDto != null && toggleDto.Visible.HasValue)
                 {
-                    SetPropertyValue(recipe, "Visible", toggleDto.Visible);
+                    recipe.Visible = toggleDto.Visible.Value;
                 }
                 else
                 {
                     // Toggle current visibility
-                    var currentVisibility = GetPropertyValue<bool>(recipe, "Visible", true);
-                    SetPropertyValue(recipe, "Visible", !currentVisibility);
+                    recipe.Visible = !recipe.Visible;
                 }
 
                 _context.Recipes.Update(recipe);
                 await _context.SaveChangesAsync();
 
-                var newVisibility = GetPropertyValue<bool>(recipe, "Visible", true);
-                return Ok(new { visible = newVisibility });
+                return Ok(new { visible = recipe.Visible });
             }
             catch (Exception ex)
             {
@@ -162,7 +160,7 @@ namespace CookbookApp.APi.Controllers.Admin
                 if (recipe == null)
                     return NotFound($"Recipe with ID {id} not found.");
 
-                SetPropertyValue(recipe, "Visible", visibilityDto.Visible);
+                recipe.Visible = visibilityDto.Visible.Value;
 
                 _context.Recipes.Update(recipe);
                 await _context.SaveChangesAsync();
@@ -204,12 +202,10 @@ namespace CookbookApp.APi.Controllers.Admin
             {
                 var recipes = await _context.Recipes
                     .Include(r => r.User)
+                    .Where(r => r.Visible) // Direct property access
                     .ToListAsync();
 
-                // Filter visible recipes (handle both cases: property exists or doesn't)
-                var visibleRecipes = recipes.Where(r => GetPropertyValue<bool>(r, "Visible", true)).ToList();
-                var result = visibleRecipes.Select(r => MapToGetRecipeDto(r)).ToList();
-
+                var result = recipes.Select(r => MapToGetRecipeDto(r)).ToList();
                 return Ok(result);
             }
             catch (Exception ex)
@@ -257,18 +253,17 @@ namespace CookbookApp.APi.Controllers.Admin
                 Instructions = recipe.Instructions,
                 Image = recipe.Image,
                 UserID = recipe.UserID,
-
-                // Handle additional properties with fallbacks
                 Author = GetAuthorName(recipe),
-                Description = GetPropertyValue<string>(recipe, "Description", "") ??
-                           GenerateDescriptionFromInstructions(recipe.Instructions),
-                Visible = GetPropertyValue<bool>(recipe, "Visible", true)
+                Description = !string.IsNullOrEmpty(recipe.Description)
+                    ? recipe.Description
+                    : GenerateDescriptionFromInstructions(recipe.Instructions),
+                Visible = recipe.Visible
             };
         }
 
         private Recipe MapFromRecipeDto(RecipeDto dto)
         {
-            var recipe = new Recipe
+            return new Recipe
             {
                 Title = dto.Title,
                 Category = dto.Category,
@@ -281,14 +276,10 @@ namespace CookbookApp.APi.Controllers.Admin
                 Ingredients = dto.Ingredients,
                 Instructions = dto.Instructions,
                 Image = dto.Image,
-                UserID = dto.UserID
+                UserID = dto.UserID,
+                Description = dto.Description,
+                Visible = dto.Visible
             };
-
-            // Set additional properties if they exist
-            SetPropertyValue(recipe, "Description", dto.Description);
-            SetPropertyValue(recipe, "Visible", dto.Visible);
-
-            return recipe;
         }
 
         private void UpdateRecipeFromDto(Recipe recipe, RecipeDto dto)
@@ -305,19 +296,15 @@ namespace CookbookApp.APi.Controllers.Admin
             recipe.Instructions = dto.Instructions;
             recipe.Image = dto.Image;
             recipe.UserID = dto.UserID;
-
-            // Update additional properties if they exist
-            SetPropertyValue(recipe, "Description", dto.Description);
-            SetPropertyValue(recipe, "Visible", dto.Visible);
+            recipe.Description = dto.Description;
+            recipe.Visible = dto.Visible;
         }
 
         private string GetAuthorName(Recipe recipe)
         {
-            if (recipe.User != null)
+            if (recipe.User != null && !string.IsNullOrEmpty(recipe.User.Username))
             {
-                return !string.IsNullOrEmpty(recipe.User.Username) ? recipe.User.Username :
-                       GetPropertyValue<string>(recipe.User, "Username", "") ??
-                       $"User {recipe.UserID}";
+                return recipe.User.Username;
             }
             return $"User {recipe.UserID}";
         }
@@ -335,34 +322,6 @@ namespace CookbookApp.APi.Controllers.Admin
             var lastSpace = truncated.LastIndexOf(' ');
 
             return lastSpace > 0 ? truncated.Substring(0, lastSpace) + "..." : truncated + "...";
-        }
-
-        private bool HasProperty(object obj, string propertyName)
-        {
-            return obj.GetType().GetProperty(propertyName) != null;
-        }
-
-        private T GetPropertyValue<T>(object obj, string propertyName, T defaultValue = default(T))
-        {
-            var property = obj.GetType().GetProperty(propertyName);
-            if (property != null && property.CanRead)
-            {
-                var value = property.GetValue(obj);
-                if (value is T)
-                    return (T)value;
-                if (value != null && typeof(T).IsAssignableFrom(value.GetType()))
-                    return (T)value;
-            }
-            return defaultValue;
-        }
-
-        private void SetPropertyValue<T>(object obj, string propertyName, T value)
-        {
-            var property = obj.GetType().GetProperty(propertyName);
-            if (property != null && property.CanWrite && property.PropertyType.IsAssignableFrom(typeof(T)))
-            {
-                property.SetValue(obj, value);
-            }
         }
 
         #endregion

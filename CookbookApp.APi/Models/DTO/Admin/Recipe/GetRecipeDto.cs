@@ -1,4 +1,6 @@
-﻿namespace CookbookApp.APi.Models.DTO.Admin.Recipe
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace CookbookApp.APi.Models.DTO.Admin.Recipe
 {
     public class GetRecipeDto
     {
@@ -19,8 +21,8 @@
         public bool Visible { get; set; } = true;
 
         // Frontend compatibility properties
-        public string Name => Title; // Keep this mapping
-        public string Author { get; set; } // Will be populated from User.Name
-        public int User => 1; // Keep for frontend compatibility
+        public string Name => Title;
+        public string Author { get; set; }
+        public int User => UserID; // Fixed: return actual UserID instead of hardcoded 1
     }
 }
