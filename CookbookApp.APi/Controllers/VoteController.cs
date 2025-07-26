@@ -28,16 +28,15 @@ namespace CookbookApp.APi.Controllers
                     return BadRequest(ModelState);
                 }
 
-                // Check if user already voted for this submission
+                // Check if user already voted for this submission in this challenge
                 var existingVote = await dbContext.Votes
-                    .FirstOrDefaultAsync(v => v.UserEmail == requestDto.UserEmail && v.SubmissionId == requestDto.SubmissionId);
+                    .FirstOrDefaultAsync(v => v.UserEmail == requestDto.UserEmail
+                        && v.SubmissionId == requestDto.SubmissionId
+                        && v.ChallengeId == requestDto.ChallengeId);
 
                 if (existingVote != null)
                 {
-                    // Remove existing vote (toggle)
-                    dbContext.Votes.Remove(existingVote);
-                    await dbContext.SaveChangesAsync();
-                    return Ok(new { success = true, message = "Vote removed successfully!", voted = false });
+                    return BadRequest(new { success = false, message = "You have already voted for this recipe.", voted = false });
                 }
 
                 // Add new vote
@@ -50,9 +49,16 @@ namespace CookbookApp.APi.Controllers
                 };
 
                 dbContext.Votes.Add(vote);
+
+                var submission = await dbContext.Submissions.FindAsync(requestDto.SubmissionId);
+                if (submission != null)
+                {
+                    submission.Votes += 1;
+                }
+
                 await dbContext.SaveChangesAsync();
 
-                return Ok(new { success = true, message = "Vote added successfully!", voted = true });
+                return Ok(new { success = true, message = "Vote added successfully!", voted = true, votes = submission?.Votes ?? 0 });
             }
             catch (Exception ex)
             {
