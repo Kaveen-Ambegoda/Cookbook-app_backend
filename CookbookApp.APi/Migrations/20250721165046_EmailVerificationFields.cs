@@ -22,13 +22,6 @@ namespace CookbookApp.APi.Migrations
                 table: "Users",
                 type: "datetime2",
                 nullable: true);
-
-            migrationBuilder.AddColumn<bool>(
-                name: "IsEmailConfirmed",
-                table: "Users",
-                type: "bit",
-                nullable: false,
-                defaultValue: false);
         }
 
         /// <inheritdoc />
@@ -40,10 +33,6 @@ namespace CookbookApp.APi.Migrations
 
             migrationBuilder.DropColumn(
                 name: "EmailVerificationTokenExpiryTime",
-                table: "Users");
-
-            migrationBuilder.DropColumn(
-                name: "IsEmailConfirmed",
                 table: "Users");
         }
     }

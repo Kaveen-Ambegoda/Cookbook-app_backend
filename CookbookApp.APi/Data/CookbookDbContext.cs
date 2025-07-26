@@ -59,10 +59,6 @@ namespace CookbookApp.APi.Data
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-        }
-
-
-            base.OnModelCreating(modelBuilder);
 
             // Notification mapping
             modelBuilder.Entity<Notification>(entity =>
