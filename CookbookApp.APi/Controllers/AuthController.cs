@@ -242,6 +242,130 @@ namespace CookbookAppBackend.Controllers
 
             return Ok(new { message = "Email verified successfully!" });
         }
+        [HttpPost("google-login")]
+        public IActionResult GoogleLogin([FromBody] GoogleLoginModel model)
+        {
+            if (string.IsNullOrEmpty(model.Email) || string.IsNullOrEmpty(model.Username))
+                return BadRequest("Invalid Google login data.");
+
+            // Check if the user already exists
+            var user = _context.Users.SingleOrDefault(u => u.Email == model.Email);
+
+            if (user == null)
+            {
+                // If user doesn't exist, create one (auto-register)
+                user = new User
+                {
+                    Username = model.Username,
+                    Email = model.Email,
+                    PasswordHash = "", // No password needed
+                    Role = "User",
+                    CreatedAt = DateTime.UtcNow,
+                    IsEmailConfirmed = true // Skip email verification for Google users
+                };
+
+                _context.Users.Add(user);
+            }
+
+            // Always update refresh token
+            var refreshToken = GenerateRefreshToken();
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+            _context.SaveChanges();
+
+            // Create claims and token
+            var claims = new[]
+            {
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.Role, user.Role),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+    };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: creds
+            );
+
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                refreshToken = refreshToken
+            });
+        }
+        
+        [HttpPost("facebook-login")]
+        public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginModel model)
+        {
+            if (string.IsNullOrEmpty(model.AccessToken))
+                return BadRequest("Missing Facebook access token");
+
+            // Get user profile from Facebook
+            var fbClient = new HttpClient();
+            var fbResponse = await fbClient.GetAsync($"https://graph.facebook.com/me?fields=id,name,email&access_token={model.AccessToken}");
+
+            if (!fbResponse.IsSuccessStatusCode)
+                return BadRequest("Invalid Facebook token");
+
+            var fbContent = await fbResponse.Content.ReadAsStringAsync();
+            var fbData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(fbContent);
+
+            if (fbData == null || !fbData.ContainsKey("email") || !fbData.ContainsKey("name"))
+                return BadRequest("Facebook account missing email or name");
+
+            var email = fbData["email"];
+            var username = fbData["name"];
+
+            var user = _context.Users.SingleOrDefault(u => u.Email == email);
+            if (user == null)
+            {
+                user = new User
+                {
+                    Username = username,
+                    Email = email,
+                    PasswordHash = "",
+                    Role = "User",
+                    CreatedAt = DateTime.UtcNow,
+                    IsEmailConfirmed = true
+                };
+                _context.Users.Add(user);
+            }
+
+            var refreshToken = GenerateRefreshToken();
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(7);
+            _context.SaveChanges();
+
+            var claims = new[]
+            {
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.Role, user.Role),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+    };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var jwt = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(30),
+                signingCredentials: creds
+            );
+
+            return Ok(new
+            {
+                token = new JwtSecurityTokenHandler().WriteToken(jwt),
+                refreshToken = refreshToken
+            });
+        }
+
 
     }
 
