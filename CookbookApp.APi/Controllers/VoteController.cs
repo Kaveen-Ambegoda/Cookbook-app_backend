@@ -111,5 +111,42 @@ namespace CookbookApp.APi.Controllers
                 return StatusCode(500, new { success = false, message = "An error occurred while rating.", error = ex.Message });
             }
         }
+
+        // GET: api/vote/user
+        [HttpGet("user")]
+        public async Task<IActionResult> GetUserVotes([FromQuery] string userEmail, [FromQuery] int challengeId)
+        {
+            var votes = await dbContext.Votes
+                .Where(v => v.UserEmail == userEmail && v.ChallengeId == challengeId.ToString())
+                .Select(v => new { submissionId = v.SubmissionId })
+                .ToListAsync();
+
+            return Ok(votes);
+        }
+
+        // GET: api/vote/raters?challengeId=xxx
+        [HttpGet("raters")]
+        public async Task<IActionResult> GetRaters([FromQuery] string challengeId)
+        {
+            var raters = await dbContext.Ratings
+                .Where(r => r.ChallengeId == challengeId)
+                .Select(r => r.UserEmail)
+                .Distinct()
+                .ToListAsync();
+
+            return Ok(new { count = raters.Count, users = raters });
+        }
+
+        // GET: api/vote/user-ratings?userEmail=xxx&challengeId=xxx
+        [HttpGet("user-ratings")]
+        public async Task<IActionResult> GetUserRatings([FromQuery] string userEmail, [FromQuery] string challengeId)
+        {
+            var ratings = await dbContext.Ratings
+                .Where(r => r.UserEmail == userEmail && r.ChallengeId == challengeId)
+                .Select(r => new { submissionId = r.SubmissionId, stars = r.Stars })
+                .ToListAsync();
+
+            return Ok(ratings);
+        }
     }
 }
