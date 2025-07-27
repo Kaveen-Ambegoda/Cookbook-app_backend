@@ -18,6 +18,7 @@ namespace CookbookApp.APi.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
 
+
         public DbSet<Challenge> Challenges { get; set; }
         public DbSet<Submission> Submissions { get; set; }
         public DbSet<Vote> Votes { get; set; }
@@ -29,10 +30,13 @@ namespace CookbookApp.APi.Data
         public DbSet<UserFavorite> UserFavorites { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<FavoriteRecipe> FavoriteRecipes { get; set; }
+        public DbSet<UserProfile> UserProfiles { get; set; }
+        public DbSet<CalorieCalculation> CalorieCalculations { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
+
             // Recipe → User (with optional cascading if needed)
             modelBuilder.Entity<Recipe>()
                 .HasOne(r => r.User)
@@ -67,10 +71,37 @@ namespace CookbookApp.APi.Data
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            // CalorieCalculation → User
+            modelBuilder.Entity<CalorieCalculation>()
+                .HasOne(cc => cc.User)
+                .WithMany()
+                .HasForeignKey(cc => cc.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // CalorieCalculation → UserProfile
+            modelBuilder.Entity<CalorieCalculation>()
+                .HasOne(cc => cc.UserProfile)
+                .WithMany()
+                .HasForeignKey(cc => cc.UserProfileId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Indexes for better performance
+            modelBuilder.Entity<UserProfile>()
+                .HasIndex(up => up.UserId);
+
+            modelBuilder.Entity<CalorieCalculation>()
+                .HasIndex(cc => cc.UserId);
+
+            modelBuilder.Entity<CalorieCalculation>()
+                .HasIndex(cc => cc.CalculatedAt);
         }
+
+        
         public DbSet<ChallengeDetail> ChallengeDetails { get; set; }
 
 
 
     }
 }
+
+

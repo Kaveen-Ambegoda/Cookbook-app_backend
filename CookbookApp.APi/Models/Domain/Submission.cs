@@ -5,6 +5,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 public class Submission
 {
     public Guid Id { get; set; }
+
+    public int RecipeId { get; set; }
     public string FullName { get; set; }
     public string RecipeName { get; set; }
     public string RecipeDescription { get; set; }
