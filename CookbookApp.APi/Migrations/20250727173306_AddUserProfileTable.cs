@@ -5,7 +5,7 @@
 namespace CookbookApp.APi.Migrations
 {
     /// <inheritdoc />
-    public partial class getChallengeDetailforSubmitForum : Migration
+    public partial class AddUserProfileTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
