@@ -6,29 +6,11 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CookbookApp.APi.Migrations
 {
     /// <inheritdoc />
-    public partial class firstMerge : Migration
+    public partial class NewInitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "Challenges",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    FullName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ChallengeCategory = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ReasonForChoosing = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    TermsAccepted = table.Column<bool>(type: "bit", nullable: false),
-                    ChallengeName = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Challenges", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "Forums",
                 columns: table => new
@@ -51,33 +33,6 @@ namespace CookbookApp.APi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Submissions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    DisplayName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RecipeName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Ingredients = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RecipeDescription = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    RecipeImage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ChallengeId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ChallengeName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ChallengeCategory = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserFullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsApproved = table.Column<bool>(type: "bit", nullable: false),
-                    ApprovedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ApprovedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Submissions", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -85,6 +40,9 @@ namespace CookbookApp.APi.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsEmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    EmailVerificationToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EmailVerificationTokenExpiryTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     RefreshToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -138,79 +96,17 @@ namespace CookbookApp.APi.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Ratings",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SubmissionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ChallengeId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Stars = table.Column<int>(type: "int", nullable: false),
-                    RatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Ratings", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Ratings_Submissions_SubmissionId",
-                        column: x => x.SubmissionId,
-                        principalTable: "Submissions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SubmissionVotes",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SubmissionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    UserEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SubmissionVotes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SubmissionVotes_Submissions_SubmissionId",
-                        column: x => x.SubmissionId,
-                        principalTable: "Submissions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Votes",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    SubmissionId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ChallengeId = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    VotedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Votes", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Votes_Submissions_SubmissionId",
-                        column: x => x.SubmissionId,
-                        principalTable: "Submissions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Recipes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MealType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Cuisine = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Diet = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Occasion = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SkillLevel = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CookingTime = table.Column<int>(type: "int", nullable: false),
                     Portion = table.Column<int>(type: "int", nullable: false),
                     Ingredients = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -282,6 +178,35 @@ namespace CookbookApp.APi.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Reviews",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RecipeId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    Rating = table.Column<int>(type: "int", nullable: false),
+                    Comment = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reviews", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Recipes_RecipeId",
+                        column: x => x.RecipeId,
+                        principalTable: "Recipes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_ForumId",
                 table: "Comments",
@@ -298,11 +223,6 @@ namespace CookbookApp.APi.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Ratings_SubmissionId",
-                table: "Ratings",
-                column: "SubmissionId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Recipes_UserID",
                 table: "Recipes",
                 column: "UserID");
@@ -313,59 +233,47 @@ namespace CookbookApp.APi.Migrations
                 column: "CommentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SubmissionVotes_SubmissionId",
-                table: "SubmissionVotes",
-                column: "SubmissionId");
+                name: "IX_Reviews_RecipeId",
+                table: "Reviews",
+                column: "RecipeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reviews_UserId",
+                table: "Reviews",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserFavorites_ForumId",
                 table: "UserFavorites",
                 column: "ForumId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Votes_SubmissionId",
-                table: "Votes",
-                column: "SubmissionId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Challenges");
-
-            migrationBuilder.DropTable(
                 name: "FavoriteRecipes");
-
-            migrationBuilder.DropTable(
-                name: "Ratings");
 
             migrationBuilder.DropTable(
                 name: "Replies");
 
             migrationBuilder.DropTable(
-                name: "SubmissionVotes");
+                name: "Reviews");
 
             migrationBuilder.DropTable(
                 name: "UserFavorites");
 
             migrationBuilder.DropTable(
-                name: "Votes");
+                name: "Comments");
 
             migrationBuilder.DropTable(
                 name: "Recipes");
 
             migrationBuilder.DropTable(
-                name: "Comments");
-
-            migrationBuilder.DropTable(
-                name: "Submissions");
+                name: "Forums");
 
             migrationBuilder.DropTable(
                 name: "Users");
-
-            migrationBuilder.DropTable(
-                name: "Forums");
         }
     }
 }

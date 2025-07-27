@@ -4,7 +4,11 @@
     {
         public int Id { get; set; } // Recipe ID
         public string Title { get; set; }
-        public string Category { get; set; }
+        public string? MealType { get; set; }
+        public string? Cuisine { get; set; }
+        public string? Diet { get; set; }
+        public string? Occasion { get; set; }
+        public string? SkillLevel { get; set; }
         public int CookingTime { get; set; }
         public int Portion { get; set; }
         public string Ingredients { get; set; }

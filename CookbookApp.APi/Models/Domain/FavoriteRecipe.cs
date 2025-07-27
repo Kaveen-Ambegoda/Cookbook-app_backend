@@ -1,4 +1,4 @@
-﻿using CookbookAppBackend.Models;
+﻿using CookbookApp.APi.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace CookbookApp.APi.Models.Domain

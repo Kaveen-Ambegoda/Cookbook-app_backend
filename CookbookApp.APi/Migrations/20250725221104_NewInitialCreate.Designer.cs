@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CookbookApp.APi.Migrations
 {
     [DbContext(typeof(CookbookDbContext))]
-    [Migration("20250722102229_AddUserIdAndUserEmail")]
-    partial class AddUserIdAndUserEmail
+    [Migration("20250725221104_NewInitialCreate")]
+    partial class NewInitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,40 +24,6 @@ namespace CookbookApp.APi.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Challenge", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChallengeCategory")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ChallengeName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ReasonForChoosing")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("TermsAccepted")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Challenges");
-                });
 
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Comment", b =>
                 {
@@ -162,38 +128,6 @@ namespace CookbookApp.APi.Migrations
                     b.ToTable("Forums");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Rating", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChallengeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("RatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("Stars")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("SubmissionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubmissionId");
-
-                    b.ToTable("Ratings");
-                });
-
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Recipe", b =>
                 {
                     b.Property<int>("Id")
@@ -208,12 +142,14 @@ namespace CookbookApp.APi.Migrations
                     b.Property<double>("Carbs")
                         .HasColumnType("float");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("CookingTime")
                         .HasColumnType("int");
+
+                    b.Property<string>("Cuisine")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Diet")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Fat")
                         .HasColumnType("float");
@@ -230,11 +166,20 @@ namespace CookbookApp.APi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("MealType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Occasion")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Portion")
                         .HasColumnType("int");
 
                     b.Property<double>("Protein")
                         .HasColumnType("float");
+
+                    b.Property<string>("SkillLevel")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -281,101 +226,6 @@ namespace CookbookApp.APi.Migrations
                     b.ToTable("Replies");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Submission", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ApprovedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ChallengeCategory")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ChallengeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ChallengeName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Ingredients")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("RecipeDescription")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RecipeImage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RecipeName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Submissions");
-                });
-
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.SubmissionVote", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("SubmissionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubmissionId");
-
-                    b.ToTable("SubmissionVotes");
-                });
-
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.UserFavorite", b =>
                 {
                     b.Property<Guid>("Id")
@@ -396,36 +246,7 @@ namespace CookbookApp.APi.Migrations
                     b.ToTable("UserFavorites");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Vote", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ChallengeId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("SubmissionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UserEmail")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("VotedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubmissionId");
-
-                    b.ToTable("Votes");
-                });
-
-            modelBuilder.Entity("CookbookAppBackend.Models.User", b =>
+            modelBuilder.Entity("CookbookApp.APi.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -439,6 +260,15 @@ namespace CookbookApp.APi.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmailVerificationToken")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EmailVerificationTokenExpiryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsEmailConfirmed")
+                        .HasColumnType("bit");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -463,6 +293,39 @@ namespace CookbookApp.APi.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipeId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Reviews");
+                });
+
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Comment", b =>
                 {
                     b.HasOne("CookbookApp.APi.Models.Domain.Forum", "Forum")
@@ -482,7 +345,7 @@ namespace CookbookApp.APi.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("CookbookAppBackend.Models.User", "User")
+                    b.HasOne("CookbookApp.APi.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -493,20 +356,9 @@ namespace CookbookApp.APi.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Rating", b =>
-                {
-                    b.HasOne("CookbookApp.APi.Models.Domain.Submission", "Submission")
-                        .WithMany("Ratings")
-                        .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Submission");
-                });
-
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Recipe", b =>
                 {
-                    b.HasOne("CookbookAppBackend.Models.User", "User")
+                    b.HasOne("CookbookApp.APi.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -526,17 +378,6 @@ namespace CookbookApp.APi.Migrations
                     b.Navigation("Comment");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.SubmissionVote", b =>
-                {
-                    b.HasOne("CookbookApp.APi.Models.Domain.Submission", "Submission")
-                        .WithMany()
-                        .HasForeignKey("SubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Submission");
-                });
-
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.UserFavorite", b =>
                 {
                     b.HasOne("CookbookApp.APi.Models.Domain.Forum", "Forum")
@@ -548,15 +389,23 @@ namespace CookbookApp.APi.Migrations
                     b.Navigation("Forum");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Vote", b =>
+            modelBuilder.Entity("Review", b =>
                 {
-                    b.HasOne("CookbookApp.APi.Models.Domain.Submission", "Submission")
-                        .WithMany("Votes")
-                        .HasForeignKey("SubmissionId")
+                    b.HasOne("CookbookApp.APi.Models.Domain.Recipe", "Recipe")
+                        .WithMany("Reviews")
+                        .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Submission");
+                    b.HasOne("CookbookApp.APi.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Recipe");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CookbookApp.APi.Models.Domain.Comment", b =>
@@ -571,11 +420,9 @@ namespace CookbookApp.APi.Migrations
                     b.Navigation("UserFavorites");
                 });
 
-            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Submission", b =>
+            modelBuilder.Entity("CookbookApp.APi.Models.Domain.Recipe", b =>
                 {
-                    b.Navigation("Ratings");
-
-                    b.Navigation("Votes");
+                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,4 @@
-﻿namespace CookbookAppBackend.Models
+﻿namespace CookbookApp.APi.Models
 {
     public class LoginModel
     {

@@ -1,16 +1,14 @@
 ﻿using CookbookApp.APi.Data;
 using CookbookApp.APi.Models;
-
 using CookbookApp.APi.Models.DTO;
 using CookbookApp.APi.Services;
-using CookbookApp.APi.Models.Domain;
-using CookbookAppBackend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client; 
+using Microsoft.Identity.Client;
 using System;
 using System.Security.Claims;
+using CookbookApp.APi.Models.Domain;
 
 namespace CookbookApp.APi.Controllers
 {
@@ -85,34 +83,6 @@ namespace CookbookApp.APi.Controllers
             return Ok(getRecipesDto);
         }
 
-        
-        /*
-        //Get all recipes to ManageREcipe page filter by user Id
-
-        [HttpGet("recipeManagePage")]
-        [Authorize]
-        public async Task<IActionResult> GetMyRecipes()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-            {
-                return Unauthorized(new { error = "User not found in token" });
-            }
-
-            var userRecipes = await _context.Recipes
-                .Where(r => r.UserId == userId)
-                .ToListAsync();
-
-            var getRecipesDto = userRecipes.Select(recipeDomain => new GetRecipeDto
-            {
-                Id = recipeDomain.Id,
-                Title = recipeDomain.Title,
-                Image = recipeDomain.Image
-            }).ToList();
-
-            return Ok(getRecipesDto);
-        }
-        */
 
         //Get a single Recipe
         [HttpGet("{id}")]
@@ -135,7 +105,11 @@ namespace CookbookApp.APi.Controllers
                 Calories = recipeDomain.Calories,
                 Carbs = recipeDomain.Carbs,
                 Fat = recipeDomain.Fat,
-                Category = recipeDomain.Category,
+                MealType = recipeDomain.MealType,
+                Cuisine = recipeDomain.Cuisine,
+                Diet = recipeDomain.Diet,
+                Occasion = recipeDomain.Occasion,
+                SkillLevel = recipeDomain.SkillLevel,
                 Ingredients = recipeDomain.Ingredients,
                 Instructions = recipeDomain.Instructions
             };
@@ -174,99 +148,75 @@ namespace CookbookApp.APi.Controllers
         }
 
 
-        /*
-
-        //Update Recipe
-        [HttpPut("updateRecipe/{id}")]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> updateRecipe(int id, [FromForm] AllRecipeDto updatedRecipe)
-        {
-            try
-            {
-                var existingRecipe = await _context.Recipes.FindAsync(id);
-
-                if (existingRecipe == null)
-                {
-                    return NotFound(new
-                    {
-                        Message = "No Recipe Found"
-                    });
-                }
-
-                existingRecipe.Title = updatedRecipe.Title;
-                existingRecipe.Image = updatedRecipe.Image;
-                existingRecipe.Portion = updatedRecipe.Portion;
-                existingRecipe.CookingTime = updatedRecipe.CookingTime;
-                existingRecipe.Category = updatedRecipe.Category;
-                existingRecipe.Calories = updatedRecipe.Calories;
-                existingRecipe.Carbs = updatedRecipe.Carbs;
-                existingRecipe.Fat = updatedRecipe.Fat;
-                existingRecipe.Protein = updatedRecipe.Protein;
-                existingRecipe.Ingredients = updatedRecipe.Ingredients;
-                existingRecipe.Instructions = updatedRecipe.Instructions;
-
-                _context.Recipes.Update(existingRecipe);
-
-                int r = await _context.SaveChangesAsync();
-                if (r > 0)
-                {
-                    return Ok(new
-                    {
-                        Message = "Product Updated"
-                    });
-                }
-                else
-                {
-                    return BadRequest(new
-                    {
-                        Error = "Cannot Update"
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new
-                {
-                    Error = ex.Message
-                });
-            }
-        }
-
-        */
-
         //Get All Recipies to HomePage
 
-        
+
         [HttpGet("homePage")]
-        public IActionResult GetHomePageRecipes()
+        public IActionResult GetHomePageRecipes(
+            [FromQuery] List<string>? mealType,
+            [FromQuery] List<string>? cuisine,
+            [FromQuery] List<string>? diet,
+            [FromQuery] List<string>? occasion,
+            [FromQuery] List<string>? skillLevel,
+            [FromQuery] int? cookingTimeMax,
+            [FromQuery] double? caloriesMax,
+            [FromQuery] double? proteinMin,
+            [FromQuery] double? fatMin,
+            [FromQuery] double? carbsMin
+)
         {
-            // Get data from the database
-            var recipesDomain = _context.Recipes.ToList();
+            var query = _context.Recipes.AsQueryable();
 
-            // Map domain models to DTO
-            var homeRecipeDto = new List<GetHomeRecipeDto>();
+            if (mealType != null && mealType.Any())
+                query = query.Where(r => mealType.Contains(r.MealType));
 
-            foreach (var recipeDomain in recipesDomain)
+            if (cuisine != null && cuisine.Any())
+                query = query.Where(r => cuisine.Contains(r.Cuisine));
+
+            if (diet != null && diet.Any())
+                query = query.Where(r => diet.Contains(r.Diet));
+
+            if (occasion != null && occasion.Any())
+                query = query.Where(r => occasion.Contains(r.Occasion));
+
+            if (skillLevel != null && skillLevel.Any())
+                query = query.Where(r => skillLevel.Contains(r.SkillLevel));
+
+            if (cookingTimeMax.HasValue)
+                query = query.Where(r => r.CookingTime <= cookingTimeMax.Value);
+
+            if (caloriesMax.HasValue)
+                query = query.Where(r => r.Calories <= caloriesMax.Value);
+
+            if (proteinMin.HasValue)
+                query = query.Where(r => r.Protein >= proteinMin.Value);
+
+            if (fatMin.HasValue)
+                query = query.Where(r => r.Fat >= fatMin.Value);
+
+            if (carbsMin.HasValue)
+                query = query.Where(r => r.Carbs >= carbsMin.Value);
+
+            var filteredRecipes = query.ToList();
+
+            // Map to DTO
+            var homeRecipeDto = filteredRecipes.Select(recipe => new GetHomeRecipeDto
             {
-                homeRecipeDto.Add(new GetHomeRecipeDto()
-                {
-                    Id = recipeDomain.Id,
-                    Title = recipeDomain.Title,
-                    Image = recipeDomain.Image,
-                    CookingTime = recipeDomain.CookingTime,
-                    Portion = recipeDomain.Portion,
-
-                });
-            }
+                Id = recipe.Id,
+                Title = recipe.Title,
+                Image = recipe.Image,
+                CookingTime = recipe.CookingTime,
+                Portion = recipe.Portion
+            }).ToList();
 
             return Ok(homeRecipeDto);
         }
 
+
         //Add new recipe throgh the manage recipe page
-        
+
 
         [Authorize]
-
         [HttpPost("AddRecipe1")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> AddRecipe1([FromForm] AllRecipeDto dto)
@@ -288,7 +238,11 @@ namespace CookbookApp.APi.Controllers
                     Title = dto.Title,
                     Ingredients = dto.Ingredients,
                     Instructions = dto.Instructions,
-                    Category = dto.Category,
+                    MealType = dto.MealType,
+                    Cuisine = dto.Cuisine,
+                    Diet = dto.Diet,
+                    Occasion = dto.Occasion,
+                    SkillLevel = dto.SkillLevel,
                     CookingTime = dto.CookingTime,
                     Portion = dto.Portion,
                     Calories = dto.Calories,
@@ -300,58 +254,30 @@ namespace CookbookApp.APi.Controllers
                 };
 
                 _context.Recipes.Add(recipe);
-                if (await _context.SaveChangesAsync() > 0)
-                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
+                var saved = await _context.SaveChangesAsync();
 
-                return BadRequest(new { error = "Failed to add recipe" });
-            }
-            catch (Exception ex)
-            {
-                var errorMessage = ex.InnerException?.Message ?? ex.Message;
-                return BadRequest(new { error = errorMessage });
-            }
-        }
-        
-        /*
-        //AddRecipe1 for manage recipe page with each user's userID
-        [HttpPost("AddRecipe1")]
-        [Authorize]
-        [Consumes("multipart/form-data")]
-        public async Task<IActionResult> AddRecipe1([FromForm] AllRecipeDto dto)
-        {
-            try
-            {
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (userId == null)
-                    return Unauthorized();
-
-                string imageUrl = null;
-
-                if (dto.Image?.Length > 0)
+                if (saved > 0)
                 {
-                    imageUrl = await _cloudinaryService.UploadImageAsync(dto.Image);
+                    // Create notification for new recipe
+                    var notification = new Notification
+                    {
+                        UserId = userId,
+                        Type = "recipe_posted",
+                        Title = "Recipe Posted",
+                        Message = $"Your recipe '{recipe.Title}' was successfully added!",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow,
+                        ActionUrl = $"/ViewRecipe/{recipe.Id}", // Adjust to your frontend route if needed
+                        ActionText = "View Recipe",
+                        RecipeId = recipe.Id
+                    };
+
+                    _context.Notifications.Add(notification);
+                    await _context.SaveChangesAsync();
+
+                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
                 }
 
-                var recipe = new Recipe
-                {
-                    Title = dto.Title,
-                    Ingredients = dto.Ingredients,
-                    Instructions = dto.Instructions,
-                    Category = dto.Category,
-                    CookingTime = dto.CookingTime,
-                    Portion = dto.Portion,
-                    Calories = dto.Calories,
-                    Protein = dto.Protein,
-                    Fat = dto.Fat,
-                    Carbs = dto.Carbs,
-                    Image = imageUrl,
-                    UserId = userId // 💡 add user ID
-                };
-
-                _context.Recipes.Add(recipe);
-                if (await _context.SaveChangesAsync() > 0)
-                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
-
                 return BadRequest(new { error = "Failed to add recipe" });
             }
             catch (Exception ex)
@@ -361,8 +287,7 @@ namespace CookbookApp.APi.Controllers
             }
         }
 
-        */
-        //Update Recipe New
+
 
 
         [Authorize]
@@ -399,7 +324,11 @@ namespace CookbookApp.APi.Controllers
                 existingRecipe.Title = updatedRecipe.Title;
                 existingRecipe.Portion = updatedRecipe.Portion;
                 existingRecipe.CookingTime = updatedRecipe.CookingTime;
-                existingRecipe.Category = updatedRecipe.Category;
+                existingRecipe.MealType = updatedRecipe.MealType;
+                existingRecipe.Cuisine = updatedRecipe.Cuisine; 
+                existingRecipe.Diet = updatedRecipe.Diet;   
+                existingRecipe.Occasion = updatedRecipe.Occasion;
+                existingRecipe.SkillLevel = updatedRecipe.SkillLevel;   
                 existingRecipe.Calories = updatedRecipe.Calories;
                 existingRecipe.Carbs = updatedRecipe.Carbs;
                 existingRecipe.Fat = updatedRecipe.Fat;
@@ -478,7 +407,193 @@ namespace CookbookApp.APi.Controllers
         }
 
 
+        // GET: /api/Recipe/filter-options
+        [HttpGet("filter-options")]
+        public IActionResult GetFilterOptions()
+        {
+            var mealTypes = _context.Recipes
+                .Where(r => r.MealType != null)
+                .Select(r => r.MealType!)
+                .Distinct()
+                .ToList();
 
+            var cuisines = _context.Recipes
+                .Where(r => r.Cuisine != null)
+                .Select(r => r.Cuisine!)
+                .Distinct()
+                .ToList();
+
+            var diets = _context.Recipes
+                .Where(r => r.Diet != null)
+                .Select(r => r.Diet!)
+                .Distinct()
+                .ToList();
+
+            var occasions = _context.Recipes
+                .Where(r => r.Occasion != null)
+                .Select(r => r.Occasion!)
+                .Distinct()
+                .ToList();
+
+            var skillLevels = _context.Recipes
+                .Where(r => r.SkillLevel != null)
+                .Select(r => r.SkillLevel!)
+                .Distinct()
+                .ToList();
+
+            return Ok(new
+            {
+                mealTypes,
+                cuisines,
+                diets,
+                occasions,
+                skillLevels
+            });
+        }
 
     }
 }
+
+
+
+/*
+        //AddRecipe1 for manage recipe page with each user's userID
+        [HttpPost("AddRecipe1")]
+        [Authorize]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> AddRecipe1([FromForm] AllRecipeDto dto)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId == null)
+                    return Unauthorized();
+
+                string imageUrl = null;
+
+                if (dto.Image?.Length > 0)
+                {
+                    imageUrl = await _cloudinaryService.UploadImageAsync(dto.Image);
+                }
+
+                var recipe = new Recipe
+                {
+                    Title = dto.Title,
+                    Ingredients = dto.Ingredients,
+                    Instructions = dto.Instructions,
+                    Category = dto.Category,
+                    CookingTime = dto.CookingTime,
+                    Portion = dto.Portion,
+                    Calories = dto.Calories,
+                    Protein = dto.Protein,
+                    Fat = dto.Fat,
+                    Carbs = dto.Carbs,
+                    Image = imageUrl,
+                    UserId = userId // 💡 add user ID
+                };
+
+                _context.Recipes.Add(recipe);
+                if (await _context.SaveChangesAsync() > 0)
+                    return Ok(new { message = "Recipe added successfully", recipeId = recipe.Id });
+
+                return BadRequest(new { error = "Failed to add recipe" });
+            }
+            catch (Exception ex)
+            {
+                var errorMessage = ex.InnerException?.Message ?? ex.Message;
+                return BadRequest(new { error = errorMessage });
+            }
+        }
+
+        */
+//Update Recipe New
+
+
+/*
+
+//Update Recipe
+[HttpPut("updateRecipe/{id}")]
+[Consumes("multipart/form-data")]
+public async Task<IActionResult> updateRecipe(int id, [FromForm] AllRecipeDto updatedRecipe)
+{
+    try
+    {
+        var existingRecipe = await _context.Recipes.FindAsync(id);
+
+        if (existingRecipe == null)
+        {
+            return NotFound(new
+            {
+                Message = "No Recipe Found"
+            });
+        }
+
+        existingRecipe.Title = updatedRecipe.Title;
+        existingRecipe.Image = updatedRecipe.Image;
+        existingRecipe.Portion = updatedRecipe.Portion;
+        existingRecipe.CookingTime = updatedRecipe.CookingTime;
+        existingRecipe.Category = updatedRecipe.Category;
+        existingRecipe.Calories = updatedRecipe.Calories;
+        existingRecipe.Carbs = updatedRecipe.Carbs;
+        existingRecipe.Fat = updatedRecipe.Fat;
+        existingRecipe.Protein = updatedRecipe.Protein;
+        existingRecipe.Ingredients = updatedRecipe.Ingredients;
+        existingRecipe.Instructions = updatedRecipe.Instructions;
+
+        _context.Recipes.Update(existingRecipe);
+
+        int r = await _context.SaveChangesAsync();
+        if (r > 0)
+        {
+            return Ok(new
+            {
+                Message = "Product Updated"
+            });
+        }
+        else
+        {
+            return BadRequest(new
+            {
+                Error = "Cannot Update"
+            });
+        }
+    }
+    catch (Exception ex)
+    {
+        return BadRequest(new
+        {
+            Error = ex.Message
+        });
+    }
+}
+
+*/
+
+
+/*
+        //Get all recipes to ManageREcipe page filter by user Id
+
+        [HttpGet("recipeManagePage")]
+        [Authorize]
+        public async Task<IActionResult> GetMyRecipes()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+            {
+                return Unauthorized(new { error = "User not found in token" });
+            }
+
+            var userRecipes = await _context.Recipes
+                .Where(r => r.UserId == userId)
+                .ToListAsync();
+
+            var getRecipesDto = userRecipes.Select(recipeDomain => new GetRecipeDto
+            {
+                Id = recipeDomain.Id,
+                Title = recipeDomain.Title,
+                Image = recipeDomain.Image
+            }).ToList();
+
+            return Ok(getRecipesDto);
+        }
+        */
