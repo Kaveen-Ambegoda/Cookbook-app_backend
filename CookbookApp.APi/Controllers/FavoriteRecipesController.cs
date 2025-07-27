@@ -1,6 +1,5 @@
 ﻿using CookbookApp.APi.Data;
 using CookbookApp.APi.Models.Domain;
-using CookbookAppBackend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

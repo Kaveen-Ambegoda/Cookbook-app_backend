@@ -1,12 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-
-
-
-
-using CookbookApp.APi.Models.Domain; // For Recipe
-// For Forum, Comment, Reply, UserFavorite
-using CookbookAppBackend.Models;     // For User
-
+using CookbookApp.APi.Models;
+using CookbookApp.APi.Models.Domain;     // For User
 
 namespace CookbookApp.APi.Data
 {
@@ -14,25 +8,19 @@ namespace CookbookApp.APi.Data
     {
         public CookbookDbContext(DbContextOptions<CookbookDbContext> options) : base(options) { }
 
-        
         public DbSet<User> Users { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
-
-        public DbSet<Challenge> Challenges { get; set; }
-        public DbSet<Submission> Submissions { get; set; }
-        public DbSet<Vote> Votes { get; set; }
-        public DbSet<Rating> Ratings { get; set; }
-
         public DbSet<Forum> Forums { get; set; }
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Reply> Replies { get; set; }
         public DbSet<UserFavorite> UserFavorites { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
         public DbSet<FavoriteRecipe> FavoriteRecipes { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
+
             // Recipe → User (with optional cascading if needed)
             modelBuilder.Entity<Recipe>()
                 .HasOne(r => r.User)
@@ -67,9 +55,20 @@ namespace CookbookApp.APi.Data
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
-        }
-        public DbSet<ChallengeDetail> ChallengeDetails { get; set; }
 
+            //Notification
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany() 
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.Recipe)
+                .WithMany() 
+                .HasForeignKey(n => n.RecipeId)
+                .OnDelete(DeleteBehavior.SetNull); // Since RecipeId is nullable
+        }
 
 
     }

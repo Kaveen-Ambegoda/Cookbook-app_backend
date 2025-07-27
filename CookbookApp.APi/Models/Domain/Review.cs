@@ -1,5 +1,5 @@
-﻿using CookbookApp.APi.Models.Domain;
-using CookbookAppBackend.Models;
+﻿using CookbookApp.APi.Models;
+using CookbookApp.APi.Models.Domain;
 using System.ComponentModel.DataAnnotations;
 
 public class Review

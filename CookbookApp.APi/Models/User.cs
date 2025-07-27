@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace CookbookAppBackend.Models
+namespace CookbookApp.APi.Models
 {
     public class User
     {
