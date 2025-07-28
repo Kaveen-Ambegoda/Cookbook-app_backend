@@ -52,6 +52,50 @@ namespace CookbookApp.APi.Controllers
 
             return Ok(result);
         }
+        //get unread count
+        [HttpGet("unread-count")]
+        [Authorize]
+        public async Task<IActionResult> GetUnreadNotificationCount()
+        {
+            var userIdClaim = User.FindFirst("id") ?? User.FindFirst("sub") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("User ID not found");
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            var count = await _context.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .CountAsync();
+
+            return Ok(count);
+        }
+
+        //mark-as-read
+        [HttpPost("mark-as-read")]
+        [Authorize]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            var userIdClaim = User.FindFirst("id") ?? User.FindFirst("sub") ?? User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("User ID not found");
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            var unreadNotifications = await _context.Notifications
+                .Where(n => n.UserId == userId && !n.IsRead)
+                .ToListAsync();
+
+            foreach (var notification in unreadNotifications)
+            {
+                notification.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+
 
     }
 }
