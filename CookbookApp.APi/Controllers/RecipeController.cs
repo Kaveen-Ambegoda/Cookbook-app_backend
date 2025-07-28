@@ -267,7 +267,7 @@ namespace CookbookApp.APi.Controllers
                         Message = $"Your recipe '{recipe.Title}' was successfully added!",
                         IsRead = false,
                         CreatedAt = DateTime.UtcNow,
-                        ActionUrl = $"/ViewRecipe/{recipe.Id}", // Adjust to your frontend route if needed
+                        ActionUrl = $"/RecipeManagement/ManageRecipe/ViewRecipe/{recipe.Id}", // Adjust to your frontend route if needed
                         ActionText = "View Recipe",
                         RecipeId = recipe.Id
                     };
