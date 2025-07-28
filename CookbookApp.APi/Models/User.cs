@@ -20,6 +20,13 @@ namespace CookbookAppBackend.Models
         public string PasswordHash { get; set; }
         public string Role { get; set; }  // 'Admin', 'User'
 
+        public string? Bio { get; set; }
+        public string? Location { get; set; }
+        public string? PersonalLinks { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public string Status { get; set; } = "active";
+
+
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
 

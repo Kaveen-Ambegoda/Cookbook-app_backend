@@ -56,6 +56,12 @@ namespace CookbookApp.APi.Data
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            //By default all users are active
+            modelBuilder.Entity<User>()
+            .Property(u => u.Status)
+            .HasDefaultValue("active");
+
         }
 
 
