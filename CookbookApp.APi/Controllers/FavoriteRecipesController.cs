@@ -1,6 +1,5 @@
 ﻿using CookbookApp.APi.Data;
 using CookbookApp.APi.Models.Domain;
-using CookbookAppBackend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -92,7 +91,7 @@ namespace CookbookApp.APi.Controllers
         [HttpGet("is-favorited/{recipeId}")]
         public async Task<IActionResult> IsFavorited(int recipeId)
         {
-            var userId = int.Parse(User.FindFirst("id")?.Value ?? "0");
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
 
             var isFav = await _context.FavoriteRecipes
                 .AnyAsync(f => f.RecipeId == recipeId && f.UserId == userId);

@@ -5,7 +5,6 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using CookbookApp.APi.Data;
 using CookbookApp.APi.Services;
-using CloudinaryDotNet;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,21 +17,10 @@ builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("Cloudinary"));
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
-// Add Cloudinary config
-builder.Services.AddSingleton(x =>
-{
-    var config = builder.Configuration.GetSection("Cloudinary");
-    return new Cloudinary(new Account(
-        config["CloudName"],
-        config["ApiKey"],
-        config["ApiSecret"]
-    ));
-});
-
 // Add CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
         policy
             .WithOrigins("http://localhost:8080", "https://localhost:8080") // your frontend domain
@@ -74,7 +62,7 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Middleware
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthentication();
@@ -82,7 +70,6 @@ app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
@@ -91,15 +78,4 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
-
 app.Run();
-
-// Ensure the application is stopped before making changes to the source code.
-// This avoids runtime errors like ENC0097.
-// Ensure the application is stopped before making changes to the source code.
-// This avoids runtime errors like ENC0097.
-
-// The ENC0097 error is not caused by code, but by editing and applying changes while the app is running.
-// To fix: Stop the application in Visual Studio before making code changes, then rebuild and run again.
-
-// No code changes are required to fix ENC0097.
