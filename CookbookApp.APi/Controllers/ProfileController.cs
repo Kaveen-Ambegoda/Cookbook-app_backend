@@ -35,7 +35,8 @@ namespace CookbookAppBackend.Controllers
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("Invalid user token");
+                    _logger.LogWarning("Invalid user token - no user ID found in claims");
+                    return Unauthorized(new { message = "Invalid user token" });
                 }
 
                 var user = await _context.Users
@@ -43,7 +44,10 @@ namespace CookbookAppBackend.Controllers
                     .SingleOrDefaultAsync(u => u.Id.ToString() == userId);
 
                 if (user == null)
-                    return NotFound("User not found");
+                {
+                    _logger.LogWarning("User not found for ID: {UserId}", userId);
+                    return NotFound(new { message = "User not found" });
+                }
 
                 var profileDto = new UserProfileDto
                 {
@@ -62,7 +66,7 @@ namespace CookbookAppBackend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching profile for user");
-                return StatusCode(500, new { message = "Internal server error" });
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
         }
 
@@ -74,20 +78,36 @@ namespace CookbookAppBackend.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(ModelState);
+                    var errors = ModelState
+                        .Where(x => x.Value.Errors.Count > 0)
+                        .ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                        );
+
+                    _logger.LogWarning("Model validation failed: {@Errors}", errors);
+                    return BadRequest(new { message = "Validation failed", errors = errors });
                 }
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("Invalid user token");
+                    _logger.LogWarning("Invalid user token - no user ID found in claims");
+                    return Unauthorized(new { message = "Invalid user token" });
                 }
 
                 var user = await _context.Users
                     .SingleOrDefaultAsync(u => u.Id.ToString() == userId);
 
                 if (user == null)
-                    return NotFound("User not found");
+                {
+                    _logger.LogWarning("User not found for ID: {UserId}", userId);
+                    return NotFound(new { message = "User not found" });
+                }
+
+                // Log the incoming data for debugging
+                _logger.LogInformation("Updating profile for user {UserId} with data: {@UpdateData}",
+                    userId, updatedProfile);
 
                 // Update only the fields that are allowed to be updated
                 user.Bio = updatedProfile.Bio;
@@ -105,10 +125,15 @@ namespace CookbookAppBackend.Controllers
                 _logger.LogInformation("Profile updated successfully for user {UserId}", userId);
                 return Ok(new { message = "Profile updated successfully" });
             }
+            catch (DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "Database error updating profile for user");
+                return StatusCode(500, new { message = "Database error occurred", details = dbEx.InnerException?.Message ?? dbEx.Message });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating profile for user");
-                return StatusCode(500, new { message = "Internal server error" });
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
         }
 
@@ -119,38 +144,51 @@ namespace CookbookAppBackend.Controllers
             try
             {
                 if (file == null || file.Length == 0)
+                {
+                    _logger.LogWarning("Invalid file uploaded - file is null or empty");
                     return BadRequest(new { message = "Invalid file" });
+                }
 
                 // Validate file type
                 var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif" };
                 if (!allowedTypes.Contains(file.ContentType.ToLower()))
                 {
+                    _logger.LogWarning("Invalid file type uploaded: {ContentType}", file.ContentType);
                     return BadRequest(new { message = "Only JPEG, PNG, and GIF images are allowed" });
                 }
 
                 // Validate file size (5MB limit)
                 if (file.Length > 5 * 1024 * 1024)
                 {
+                    _logger.LogWarning("File size exceeds limit: {FileSize} bytes", file.Length);
                     return BadRequest(new { message = "File size cannot exceed 5MB" });
                 }
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("Invalid user token");
+                    _logger.LogWarning("Invalid user token - no user ID found in claims");
+                    return Unauthorized(new { message = "Invalid user token" });
                 }
 
                 var user = await _context.Users
                     .SingleOrDefaultAsync(u => u.Id.ToString() == userId);
 
                 if (user == null)
-                    return NotFound("User not found");
+                {
+                    _logger.LogWarning("User not found for ID: {UserId}", userId);
+                    return NotFound(new { message = "User not found" });
+                }
+
+                _logger.LogInformation("Uploading image for user {UserId}, file size: {FileSize} bytes",
+                    userId, file.Length);
 
                 // Upload image to Cloudinary
                 var imageUrl = await _cloudinary.UploadImageAsync(file);
 
                 if (string.IsNullOrEmpty(imageUrl))
                 {
+                    _logger.LogError("Cloudinary upload returned empty URL for user {UserId}", userId);
                     return StatusCode(500, new { message = "Failed to upload image to cloud storage" });
                 }
 
@@ -158,13 +196,14 @@ namespace CookbookAppBackend.Controllers
                 user.ProfilePictureUrl = imageUrl;
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Profile image uploaded successfully for user {UserId}", userId);
+                _logger.LogInformation("Profile image uploaded successfully for user {UserId}, URL: {ImageUrl}",
+                    userId, imageUrl);
                 return Ok(new { url = imageUrl, message = "Image uploaded successfully" });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error uploading profile image");
-                return StatusCode(500, new { message = "Internal server error occurred while uploading image" });
+                return StatusCode(500, new { message = "Internal server error occurred while uploading image", details = ex.Message });
             }
         }
 
@@ -176,7 +215,14 @@ namespace CookbookAppBackend.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(ModelState);
+                    var errors = ModelState
+                        .Where(x => x.Value.Errors.Count > 0)
+                        .ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                        );
+
+                    return BadRequest(new { message = "Validation failed", errors = errors });
                 }
 
                 if (string.IsNullOrEmpty(model.CurrentPassword) || string.IsNullOrEmpty(model.NewPassword))
@@ -190,14 +236,14 @@ namespace CookbookAppBackend.Controllers
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("Invalid user token");
+                    return Unauthorized(new { message = "Invalid user token" });
                 }
 
                 var user = await _context.Users
                     .SingleOrDefaultAsync(u => u.Id.ToString() == userId);
 
                 if (user == null)
-                    return NotFound("User not found");
+                    return NotFound(new { message = "User not found" });
 
                 if (!BCrypt.Net.BCrypt.Verify(model.CurrentPassword, user.PasswordHash))
                     return BadRequest(new { message = "Current password is incorrect" });
@@ -211,7 +257,7 @@ namespace CookbookAppBackend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error changing password for user");
-                return StatusCode(500, new { message = "Internal server error" });
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
         }
 
@@ -224,14 +270,14 @@ namespace CookbookAppBackend.Controllers
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return Unauthorized("Invalid user token");
+                    return Unauthorized(new { message = "Invalid user token" });
                 }
 
                 var user = await _context.Users
                     .SingleOrDefaultAsync(u => u.Id.ToString() == userId);
 
                 if (user == null)
-                    return NotFound("User not found");
+                    return NotFound(new { message = "User not found" });
 
                 // Optional: Delete user's profile picture from Cloudinary
                 if (!string.IsNullOrEmpty(user.ProfilePictureUrl))
@@ -257,7 +303,7 @@ namespace CookbookAppBackend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting account for user");
-                return StatusCode(500, new { message = "Internal server error" });
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
         }
     }
